@@ -10,4 +10,5 @@
 #define OP_ARR_SIZE 16
 #define REG_ARR_SIZE 8
 #define LABEL_ARR_SIZE 4
+#define MAX_MACRO_NAME_LEN 31
 #endif //CLAB_GLOBALS_H

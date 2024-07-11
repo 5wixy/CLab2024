@@ -9,12 +9,22 @@ char label_arr[LABEL_ARR_SIZE][7] = {".data",".string",".entry",".extern"};
 
 
 int is_valid_macro_name(char *macro_name) {
-   remove_trailing_newline(macro_name);
+    macro_name = remove_trailing_newline(macro_name);
     if (is_op_name(macro_name) && is_reg_name(macro_name) & is_label_name(macro_name)) {
         return 1;
     }
 
     return 0;
+}
+int has_extra(char *macro_name){
+    char *extra;
+    extra = strtok(NULL, "\n");
+    if (extra != NULL) {
+        return 1;
+    }
+    return 0;
+
+
 }
 /*Checking if macro name equals to one of the label names */
 int is_label_name(char *macro_name) {
@@ -37,6 +47,11 @@ int is_op_name(char *macro_name) {
         }
     }
     return 1;
+
+}
+int is_name_too_long(char *macro_name){
+    return strlen(macro_name) > MAX_MACRO_NAME_LEN;
+
 
 }
 /*Checking if macro name equals to one of the register names */
