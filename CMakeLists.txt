@@ -14,4 +14,8 @@ add_executable(CLab "C Files/main.c"
         "C Files/hash_table.c"
         "Header Files/hash_table.h"
         "C Files/validation.c"
-        "Header Files/validation.h")
+        "Header Files/validation.h"
+        "C Files/first_pass.c"
+        "Header Files/first_pass.h"
+        "C Files/am_handler.c"
+        "Header Files/am_handler.h")

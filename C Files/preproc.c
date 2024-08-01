@@ -8,7 +8,7 @@
 #include "../Header Files/validation.h"
 #include "../Header Files/macro.h"
 
-// Define MAX_LINE_LEN, is_valid_macro_name, has_extra, save_macro_content, HashTable, initHashTable, insert, get, and other necessary parts
+// Define MAX_LINE_LEN, is_valid_macro_name, has_extra, save_macro_content, HashTable, init_hashtable, insert_macro, get, and other necessary parts
 
 int open_read_file(char *file_name, HashTable *table) {
     FILE *fp;
@@ -16,7 +16,7 @@ int open_read_file(char *file_name, HashTable *table) {
     int line_count = 0;
 
     // Debug print
-    printf("Opening file: %s\n", file_name);
+   // printf("Opening file: %s\n", file_name);
 
     fp = fopen(file_name, "r");
     if (fp == NULL) {
@@ -27,7 +27,7 @@ int open_read_file(char *file_name, HashTable *table) {
     while (fgets(str, sizeof(str), fp)) {
         line_count++;
         if (strncmp(str, "macr", 4) == 0) {
-            printf("Macro found at line %d: %s\n", line_count, str);
+           // printf("Macro found at line %d: %s\n", line_count, str);
             process_macro(fp, str, line_count, table);
         }
     }
@@ -42,7 +42,7 @@ void process_macro(FILE *fp, char *str, int line_count, HashTable *table) {
     int success;
     char *macro_name = strtok(str + 5, " \n");
 
-    printf("Processing macro: %s\n", macro_name);
+   // printf("Processing macro: %s\n", macro_name);
 
     if (is_name_too_long(macro_name)) {
         printf("Macro name too long");
@@ -66,8 +66,8 @@ void process_macro(FILE *fp, char *str, int line_count, HashTable *table) {
         return;
     }
 
-    insert(table, macro_name, macro_content);
-    printf("Macro inserted: %s -> %s\n", macro_name, get(table, macro_name));
+    insert_macro(table, macro_name, macro_content);
+    //printf("Macro inserted: %s -> %s\n", macro_name, get(table, macro_name));
     fsetpos(fp, &pos);
 }
 
@@ -92,7 +92,6 @@ char *save_macro_content(FILE *fp, fpos_t *pos, int *line_count) {
     }
 
     macro = copy_text(fp, &start_pos, macro_length);
-    print_ascii_values(macro);
     macro = remove_newline(macro);
     if (macro == NULL) {
         return NULL;
@@ -122,7 +121,7 @@ void remove_macros(FILE *original, FILE *copied) {
         fputs(line, copied);
     }
 
-    printf("File copied with macro definitions removed.\n");
+    //printf("File copied with macro definitions removed.\n");
 }
 
 void insert_macros(const char* source_file, const char* destination_file, HashTable *table) {
@@ -160,24 +159,23 @@ void insert_macros(const char* source_file, const char* destination_file, HashTa
         fputc('\n', copied);
     }
 
-    printf("Macros expanded into the file.\n");
+    //printf("Macros expanded into the file.\n");
 
     fclose(original);
     fclose(copied);
 }
 
-int expand_macro(char file_name[]) {
-    HashTable table;
-    initHashTable(&table);
+int expand_macro(char file_name[],HashTable *table) {
+
     char *temp_file, *complete;
     int remove_macros = 1;
 
     printf("Starting macro expansion for file: %s\n", file_name);
-    open_read_file(file_name, &table);
+    open_read_file(file_name, table);
     temp_file = create_new_file_name(file_name, ".tmp");
     copy_file_content(file_name, temp_file, remove_macros);
     complete = create_new_file_name(temp_file, ".am");
-    insert_macros(temp_file, complete, &table);
+    insert_macros(temp_file, complete, table);
 
     printf("Macro expansion complete.\n");
     return 0;

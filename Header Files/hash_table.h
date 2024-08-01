@@ -11,11 +11,22 @@
 
 // Define the TABLE_SIZE
 #define TABLE_SIZE 100 // Adjust this size as needed
-
+typedef enum {
+    TYPE_MACRO,
+    TYPE_LABEL
+} ItemType;
 // Define the HashItem structure
 typedef struct HashItem {
     char *name;
-    char *content;
+    ItemType type;
+    union {
+        char *content; // For macros
+        struct {
+            int address;
+            char *data_or_instruction;
+            int type;
+        } label; // For labels
+    } data;
     struct HashItem *next;
 } HashItem;
 
@@ -26,9 +37,10 @@ typedef struct {
 
 // Function prototypes
 unsigned long hash(const char *macro_name);
-void initHashTable(HashTable *ht);
-void insert(HashTable *ht, const char *key, const char *value);
+void init_hashtable(HashTable *ht);
+void insert_macro(HashTable *ht, const char *key, const char *content);
 char *get(HashTable *ht, const char *key);
+void insert_label(HashTable *ht, const char *key, int address, const char *data_or_instruction, int type);
 void freeHashTable(HashTable *ht);
 
 #endif // CLAB_HASH_TABLE_H

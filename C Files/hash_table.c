@@ -4,15 +4,15 @@
 #include "stdlib.h"
 
 
-void initHashTable(HashTable *ht) {
+void init_hashtable(HashTable *ht) {
     int i;
     for (i = 0; i < TABLE_SIZE; i++) {
         ht->table[i] = NULL;
     }
 }
-void insert(HashTable *ht, const char *key, const char *value) {
-    //printf("%s",key);
+void insert_macro(HashTable *ht, const char *key, const char *content) {
     unsigned long idx = hash(key);
+
     // Create a new entry
     HashItem *newItem = (HashItem *)malloc(sizeof(HashItem));
     if (!newItem) {
@@ -20,15 +20,38 @@ void insert(HashTable *ht, const char *key, const char *value) {
         exit(EXIT_FAILURE);
     }
     newItem->name = strdup(key);
-    newItem->content = strdup(value);
+    newItem->type = TYPE_MACRO;
+    newItem->data.content = strdup(content);
     newItem->next = NULL;
 
     // Insert into the hash table using chaining for collision resolution
     if (ht->table[idx] == NULL) {
-
         ht->table[idx] = newItem;
     } else {
-        // Collision: add to the front of the chain
+        newItem->next = ht->table[idx];
+        ht->table[idx] = newItem;
+    }
+}
+void insert_label(HashTable *ht, const char *key, int address, const char *data_or_instruction, int type) {
+    unsigned long idx = hash(key);
+
+    // Create a new entry
+    HashItem *newItem = (HashItem *)malloc(sizeof(HashItem));
+    if (!newItem) {
+        perror("Memory allocation error");
+        exit(EXIT_FAILURE);
+    }
+    newItem->name = strdup(key);
+    newItem->type = TYPE_LABEL;
+    newItem->data.label.address = address;
+    newItem->data.label.data_or_instruction = strdup(data_or_instruction);
+    newItem->data.label.type = type;
+    newItem->next = NULL;
+
+    // Insert into the hash table using chaining for collision resolution
+    if (ht->table[idx] == NULL) {
+        ht->table[idx] = newItem;
+    } else {
         newItem->next = ht->table[idx];
         ht->table[idx] = newItem;
     }
@@ -40,7 +63,7 @@ char *get(HashTable *ht, const char *key) {
     // Traverse the chain at the index
     while (entry != NULL) {
         if (strcmp(entry->name, key) == 0) {
-            return entry->content;  // Found key, return value
+            return entry->data.content;  // Found key, return value
         }
         entry = entry->next;
     }
@@ -55,7 +78,11 @@ void freeHashTable(HashTable *ht) {
             HashItem *prev = entry;
             entry = entry->next;
             free(prev->name);
-            free(prev->content);
+            if (prev->type == TYPE_MACRO) {
+                free(prev->data.content);
+            } else if (prev->type == TYPE_LABEL) {
+                free(prev->data.label.data_or_instruction);
+            }
             free(prev);
         }
     }

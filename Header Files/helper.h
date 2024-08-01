@@ -12,4 +12,6 @@ void close_resources(int num_args, ...);
 void copy_file_content(const char *source_file, const char *destination_file, int remove_macros);
 void print_ascii_values(char *str);
 char* remove_newline(char *str);
+void remove_commas(char *str);
+
 #endif //CLAB_HELPER_H

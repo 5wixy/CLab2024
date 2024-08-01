@@ -85,6 +85,18 @@ build CMakeFiles/CLab.dir/C_Files/validation.c.obj: C_COMPILER__CLab_unscanned_D
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\C_Files
 
+build CMakeFiles/CLab.dir/C_Files/first_pass.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/C$ Files/first_pass.c || cmake_object_order_depends_target_CLab
+  DEP_FILE = CMakeFiles\CLab.dir\C_Files\first_pass.c.obj.d
+  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\CLab.dir
+  OBJECT_FILE_DIR = CMakeFiles\CLab.dir\C_Files
+
+build CMakeFiles/CLab.dir/C_Files/am_handler.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/C$ Files/am_handler.c || cmake_object_order_depends_target_CLab
+  DEP_FILE = CMakeFiles\CLab.dir\C_Files\am_handler.c.obj.d
+  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\CLab.dir
+  OBJECT_FILE_DIR = CMakeFiles\CLab.dir\C_Files
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target CLab
@@ -93,7 +105,7 @@ build CMakeFiles/CLab.dir/C_Files/validation.c.obj: C_COMPILER__CLab_unscanned_D
 #############################################
 # Link the executable CLab.exe
 
-build CLab.exe: C_EXECUTABLE_LINKER__CLab_Debug CMakeFiles/CLab.dir/C_Files/main.c.obj CMakeFiles/CLab.dir/C_Files/preproc.c.obj CMakeFiles/CLab.dir/C_Files/helper.c.obj CMakeFiles/CLab.dir/C_Files/macro.c.obj CMakeFiles/CLab.dir/C_Files/hash_table.c.obj CMakeFiles/CLab.dir/C_Files/validation.c.obj
+build CLab.exe: C_EXECUTABLE_LINKER__CLab_Debug CMakeFiles/CLab.dir/C_Files/main.c.obj CMakeFiles/CLab.dir/C_Files/preproc.c.obj CMakeFiles/CLab.dir/C_Files/helper.c.obj CMakeFiles/CLab.dir/C_Files/macro.c.obj CMakeFiles/CLab.dir/C_Files/hash_table.c.obj CMakeFiles/CLab.dir/C_Files/validation.c.obj CMakeFiles/CLab.dir/C_Files/first_pass.c.obj CMakeFiles/CLab.dir/C_Files/am_handler.c.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\CLab.dir

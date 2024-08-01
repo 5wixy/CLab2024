@@ -8,7 +8,7 @@
 #include "stdio.h"
 #include "../Header Files/validation.h"
 #include "../Header Files/helper.h"
-#include "../Header Files/command_handler.h"
+#include "../Header Files/am_handler.h"
 
 char* get_first_word(char *str) {
     char line_copy[MAX_LINE_LEN];
