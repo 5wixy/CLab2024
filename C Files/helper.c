@@ -3,6 +3,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "../Header Files/validation.h"
+#include "../Header Files/globals.h"
+#include "../Header Files/am_handler.h"
 #include "../Header Files/preproc.h"
 #include "../Header Files//helper.h"
 #include "../Header Files/globals.h"
@@ -36,6 +39,21 @@ void *malloc_helper(long object_size){
     }
     return obj_ptr;
 
+}
+int detect_addressing_method(char *arg) {
+    if (arg[0] == '#') {
+        // Immediate addressing (method 0)
+        return 0;
+    } else if (arg[0] == '*') {
+        // Memory-indirect addressing (method 2)
+        return 2;
+    } else if ((is_reg_name(arg))) {
+        // Direct register addressing (method 3)
+        return 3;
+    } else {
+        // Direct addressing (method 1)
+        return 1;
+    }
 }
 
 char* remove_trailing_newline(char *str) {

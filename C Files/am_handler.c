@@ -133,55 +133,76 @@ int is_valid_command(command_parts *command){
         case MOV:
         case ADD:
         case SUB:
-        {
-
-            if(command->dest[0]=="#"){
-               printf("ERROR CANNOT DIRECT ADDRESS FOR THIS OPERATION");
+            // Both source and destination are allowed
+            // Immediate addressing not allowed for destination
+            if (command->dest && detect_addressing_method(command->dest) == 0) {
+                printf("ERROR: Cannot use immediate address for destination in MOV/ADD/SUB.\n");
                 return 0;
             }
-            //0,1,2,3 source, 1,2,3 dest.
+            break;
 
-        }
         case CMP:
-        {
-            //0,1,2,3 source and dest.
-        }
+            // Both source and destination are allowed
+            break;
+
         case LEA:
-        {
-            // 1 for source, 1,2,3 for dest
-        }
+            // Source must be direct or memory-indirect, destination can be any valid method
+            if (command->source && detect_addressing_method(command->source) > 1) {
+                printf("ERROR: LEA source must be direct or memory-indirect.\n");
+                return 0;
+            }
+            break;
+
         case CLR:
         case NOT:
         case INC:
         case DEC:
         case RED:
+            // No source operand, destination can be any valid method
+            if (command->source != NULL) {
+                printf("ERROR: CLR/NOT/INC/DEC/RED cannot have a source operand.\n");
+                return 0;
+            }
+            break;
 
-        {
-            //no source. 1,2,3 for dest
-        }
         case JMP:
         case BNE:
         case JSR:
-        {
-            //no source. addressing methods 1,2 for dest
-        }
+            // No source operand, destination must be direct or memory-indirect
+            if (command->source != NULL) {
+                printf("ERROR: JMP/BNE/JSR cannot have a source operand.\n");
+                return 0;
+            }
+            if (command->dest && detect_addressing_method(command->dest) < 1 && detect_addressing_method(command->dest) > 2) {
+                printf("ERROR: JMP/BNE/JSR destination must be direct or memory-indirect.\n");
+                return 0;
+            }
+            break;
+
         case PRN:
-        {
-            //no source, 0,1,2,3 for dest
-        }
+            // No source operand, destination can be any valid method
+            if (command->source != NULL) {
+                printf("ERROR: PRN cannot have a source operand.\n");
+                return 0;
+            }
+            break;
+
         case RTS:
         case STOP:
-        {
-            //no source no dest
-            if(command->source != NULL || command->dest != NULL){
-                //ERROR OPCODE CANT HAVE OPERANDS
+            // No source or destination operands
+            if (command->source != NULL || command->dest != NULL) {
+                printf("ERROR: RTS/STOP cannot have operands.\n");
                 return 0;
-
             }
-        }
+            break;
 
+        default:
+            printf("ERROR: Unknown opcode.\n");
+            return 0;
     }
 
-
-
+    return 1;
 }
+
+
+

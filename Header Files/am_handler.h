@@ -24,4 +24,5 @@ void skip_first_word(char *line_copy);
 int match_opcodes(char *str);
 int find_register_index( char *reg_name);
 int is_data_instruction(char *word);
+int is_valid_command(command_parts *command);
 #endif //CLAB_AM_HANDLER_H

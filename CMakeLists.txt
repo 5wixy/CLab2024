@@ -18,4 +18,6 @@ add_executable(CLab "C Files/main.c"
         "C Files/first_pass.c"
         "Header Files/first_pass.h"
         "C Files/am_handler.c"
-        "Header Files/am_handler.h")
+        "Header Files/am_handler.h"
+        "C Files/code_binary.c"
+        "C Files/code_binary.h")
