@@ -222,11 +222,10 @@ void process_string_directive(char *label_name, char *line, HashTable *table, in
     size_t total_length = string_length + 1;  // Include the null terminator
 
     // Calculate the number of 15-bit words needed
-    size_t num_words = (total_length + 1) / 2;  // Each word is 15 bits, so 2 bytes
-    num_words += (total_length % 2 == 0) ? 0 : 1;  // If odd length, add one more word
+
 
     // Initialize index for memory_array
-    size_t index = *IC;
+    size_t index = *DC;
 
     // Convert each character to a 15-bit binary string and store in memory_array
     char binary_char[16];  // Temporary buffer for one 15-bit binary string
@@ -247,7 +246,8 @@ void process_string_directive(char *label_name, char *line, HashTable *table, in
 
     // Update the data counter (DC) and insert the string into the hash table
     *DC = *IC;
-    *DC += num_words;
+    *DC += total_length;
+    *IC = *DC;
     printf("Updated DC: %d\n", *DC);
     if (label_name != NULL) {
         insert_label(table, label_name, *DC, "data", 0);
@@ -258,7 +258,7 @@ void process_string_directive(char *label_name, char *line, HashTable *table, in
 int start_first_pass(char* file_name, HashTable* table) {
     int IC = 100;
     int DC = 0;
-    char *memory_array;
+    char (*memory_array)[WORD_SIZE] = malloc(MEMORY_SIZE * WORD_SIZE * sizeof(char));
     FILE* fp;
     char str[MAX_LINE_LEN];
 
@@ -272,6 +272,7 @@ int start_first_pass(char* file_name, HashTable* table) {
         char line_copy[MAX_LINE_LEN];
         strncpy(line_copy, str, sizeof(line_copy) - 1);
         char* first_word = get_first_word(str);
+        remove_trailing_newline(line_copy);
         if (strchr(str, '.')) {
             if (strstr(line_copy, ".entry") || strstr(line_copy, ".extern")) {
                 if (strstr(line_copy, ".extern")) {
@@ -292,6 +293,7 @@ int start_first_pass(char* file_name, HashTable* table) {
             process_label_line(str, first_word, table, &IC,&DC,memory_array);
 
         } else if (is_data_instruction(first_word)) {
+            DC = IC;
             process_data_or_string(NULL,first_word,line_copy,table,&IC,&DC,memory_array);
 
         } else {

@@ -14,7 +14,7 @@ char type_arr[TYPE_ARR_SIZE][7] = {".data", ".string", ".entry", ".extern"};
 
 
 int is_valid_macro_name(char *macro_name) {
-    macro_name = remove_trailing_newline(macro_name);
+    remove_trailing_newline(macro_name);
     if (is_op_name(macro_name) && is_reg_name(macro_name) & is_type_data_type_name(macro_name)) {
         return 1;
     }

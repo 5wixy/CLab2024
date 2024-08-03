@@ -56,29 +56,23 @@ int detect_addressing_method(char *operand) {
         return REGISTER_POINTER; // Register indirect addressing
     } else if (operand[0] == 'r' && isdigit(operand[1])) {
         return REGISTER_DIRECT; // Register direct addressing
-    } else {
+    } else if(operand[0] == '\0'){
+        return -1;
+    }
+
+
+    else {
         return DIRECT; // Direct addressing (label by name)
     }
 }
 
-char* remove_trailing_newline(char *str) {
-    // Find the position of the newline character
-    size_t len = strcspn(str, "\n");
+void remove_trailing_newline(char *str) {
+    size_t len = strlen(str);
 
-    // Allocate memory for the new string
-    char *new_str = (char*)malloc((len + 1) * sizeof(char));
-    if (new_str == NULL) {
-        perror("Failed to allocate memory");
-        exit(EXIT_FAILURE);
+    // Check if the last character is a newline and remove it
+    if (len > 0 && str[len - 1] == '\n') {
+        str[len - 1] = '\0';  // Replace newline with null terminator
     }
-
-    // Copy the characters up to the newline
-    strncpy(new_str, str, len);
-
-    // Null-terminate the new string
-    new_str[len] = '\0';
-
-    return new_str;
 }
 void ascii_to_15_bit_binary(char ch, char *binary_str, size_t max_len) {
     int i;
@@ -107,24 +101,49 @@ size_t count_15_bit_words(size_t total_length) {
     return num_words;
 }
 void extract_operands(const char *line, char *source, char *dest) {
-    // This function assumes operands are separated by a comma
-    // and are placed after the opcode
     char line_copy[MAX_LINE_LEN];
     strcpy(line_copy, line);
 
-    // Skip the opcode and whitespace
-    char *opcode = strtok(line_copy, " ,");
-    if (opcode != NULL) {
-        // Extract source operand
-        char *operand = strtok(NULL, " ,");
-        if (operand != NULL) {
-            strcpy(source, operand);
-            // Extract destination operand
-            operand = strtok(NULL, " ,");
-            if (operand != NULL) {
-                strcpy(dest, operand);
-            }
+    // Skip over the label if present (assumes label ends with ':')
+    char *label_end = strchr(line_copy, ':');
+    if (label_end != NULL) {
+        // Move past the label
+        char *start_of_instruction = label_end + 1;
+        // Skip leading whitespace after the label
+        while (isspace(*start_of_instruction)) {
+            start_of_instruction++;
         }
+        strcpy(line_copy, start_of_instruction);
+    }
+
+    // Now we have the instruction part
+    char *opcode = strtok(line_copy, " ,");
+    if (opcode == NULL) {
+        // Handle error: No opcode found
+        printf("ERROR: No opcode found.\n");
+        source[0] = '\0';
+        dest[0] = '\0';
+        return;
+    }
+
+    // Extract the source operand
+    char *operand = strtok(NULL, " ,");
+    if (operand != NULL) {
+        // Check if there are more operands
+        char *next_operand = strtok(NULL, " ,");
+        if (next_operand != NULL) {
+            // Two operands present
+            strcpy(source, operand);
+            strcpy(dest, next_operand);
+        } else {
+            // Only one operand present; treat it as the destination
+            source[0] = '\0';  // Ensure source is an empty string
+            strcpy(dest, operand);
+        }
+    } else {
+        // No operands present
+        source[0] = '\0';  // Ensure source is an empty string
+        dest[0] = '\0';    // Ensure dest is an empty string
     }
 }
 

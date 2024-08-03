@@ -106,33 +106,44 @@ int count_numbers(const char *line) {
 int is_valid_input(const char *line) {
     int i = 0;
     int length = strlen(line);
+    int has_number = 0;
+    int has_valid_data = 0;
 
-    // Check for leading comma
-    if (line[i] == ',') {
-        return 0; // Invalid input
+    // Skip leading whitespace
+    while (isspace(line[i])) {
+        i++;
     }
 
+    // Check for the .data directive and skip it
+    if (strncmp(&line[i], ".data", 5) == 0) {
+        i += 5;
+        // Skip any whitespace after .data
+        while (isspace(line[i])) {
+            i++;
+        }
+    }
+
+    // Now check for numbers or commas
     int comma_expected = 0;
     while (i < length) {
         if (line[i] == ',') {
-            if (comma_expected == 0) {
-                return 0; // Invalid input: consecutive commas or leading comma
+            if (!has_number || comma_expected == 0) {
+                return 0; // Invalid input: consecutive commas or no number before comma
             }
             comma_expected = 0;
+            has_number = 0; // Reset has_number flag
         } else if (isdigit(line[i]) || (line[i] == '-' && isdigit(line[i + 1]))) {
             comma_expected = 1;
+            has_number = 1; // Valid number found
+            has_valid_data = 1; // At least one valid number found
         } else if (!isspace(line[i])) {
             return 0; // Invalid input: unexpected character
         }
         i++;
     }
 
-    // Check for trailing comma
-    if (line[length - 1] == ',') {
-        return 0; // Invalid input: trailing comma
-    }
-
-    return 1; // Valid input
+    // Check if there was at least one valid number
+    return has_valid_data && comma_expected;
 }
 int match_opcodes(char *str){
     int i;
@@ -268,7 +279,11 @@ void increment_IC(char *line, int *IC) {
     if ((src_method == REGISTER_POINTER || src_method == REGISTER_DIRECT) &&
         (dest_method == REGISTER_POINTER || dest_method == REGISTER_DIRECT)) {
         *IC += 2;  // Both operands are using addressing methods 2 or 3
-    } else if (src_method == REGISTER_POINTER || src_method == REGISTER_DIRECT ||
+    } else if(src_method == -1 && (dest_method == IMMEDIATE || dest_method == REGISTER_DIRECT || dest_method == REGISTER_POINTER || dest_method == DIRECT)){
+        *IC+=2;
+    }
+
+    else if (src_method == REGISTER_POINTER || src_method == REGISTER_DIRECT ||
                dest_method == REGISTER_POINTER || dest_method == REGISTER_DIRECT) {
         *IC += 3;  // One operand uses addressing method 2 or 3
     } else {
