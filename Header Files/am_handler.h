@@ -25,4 +25,7 @@ int match_opcodes(char *str);
 int find_register_index( char *reg_name);
 int is_data_instruction(char *word);
 int is_valid_command(command_parts *command);
+int is_valid_input(const char *line);
+int count_numbers(const char *line);
+void increment_IC(char *line, int *IC);
 #endif //CLAB_AM_HANDLER_H

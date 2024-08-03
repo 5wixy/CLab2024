@@ -83,7 +83,57 @@ void skip_first_word(char *line_copy) {
 
     *dst = '\0';  // Null-terminate the resulting string
 }
+int count_numbers(const char *line) {
+    int count = 0;
+    int i = 0;
+    int length = strlen(line);
 
+    int number_started = 0;
+    while (i < length) {
+        if (isdigit(line[i]) || (line[i] == '-' && isdigit(line[i + 1]))) {
+            if (number_started == 0) {
+                count++;
+                number_started = 1;
+            }
+        } else if (line[i] == ',') {
+            number_started = 0;
+        }
+        i++;
+    }
+
+    return count;
+}
+int is_valid_input(const char *line) {
+    int i = 0;
+    int length = strlen(line);
+
+    // Check for leading comma
+    if (line[i] == ',') {
+        return 0; // Invalid input
+    }
+
+    int comma_expected = 0;
+    while (i < length) {
+        if (line[i] == ',') {
+            if (comma_expected == 0) {
+                return 0; // Invalid input: consecutive commas or leading comma
+            }
+            comma_expected = 0;
+        } else if (isdigit(line[i]) || (line[i] == '-' && isdigit(line[i + 1]))) {
+            comma_expected = 1;
+        } else if (!isspace(line[i])) {
+            return 0; // Invalid input: unexpected character
+        }
+        i++;
+    }
+
+    // Check for trailing comma
+    if (line[length - 1] == ',') {
+        return 0; // Invalid input: trailing comma
+    }
+
+    return 1; // Valid input
+}
 int match_opcodes(char *str){
     int i;
     if (str == NULL) {
@@ -202,6 +252,28 @@ int is_valid_command(command_parts *command){
     }
 
     return 1;
+}
+void increment_IC(char *line, int *IC) {
+    char source[80] = {0};
+    char dest[80] = {0};
+
+    // Extract operands from the line
+    extract_operands(line, source, dest);
+
+    // Determine the addressing methods for both operands
+    int src_method = detect_addressing_method(source);
+    int dest_method = detect_addressing_method(dest);
+
+    // Increment IC based on addressing methods
+    if ((src_method == REGISTER_POINTER || src_method == REGISTER_DIRECT) &&
+        (dest_method == REGISTER_POINTER || dest_method == REGISTER_DIRECT)) {
+        *IC += 2;  // Both operands are using addressing methods 2 or 3
+    } else if (src_method == REGISTER_POINTER || src_method == REGISTER_DIRECT ||
+               dest_method == REGISTER_POINTER || dest_method == REGISTER_DIRECT) {
+        *IC += 3;  // One operand uses addressing method 2 or 3
+    } else {
+        *IC += 1;  // No operands or other addressing methods
+    }
 }
 
 

@@ -108,17 +108,12 @@ int is_legal_label(char *str){
 
 }
 char* is_data_or_string(char *line){
-    //printf(line);
     char *first = strtok(line," ");
-    //printf(first);
     if(strcmp(first,".data") == 0){
         return "data";
     }
-    if(strcmp(first,".string")){
+    if(strcmp(first,".string")==0){
         return "string";
-
-
     }
-
 }
 

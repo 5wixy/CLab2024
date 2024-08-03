@@ -11,6 +11,8 @@ int main() {
         return 1; // Error occurred
     }
     const char *am_file_name = "D:\\CLab\\basic_test.am";
-    if(start_first_pass(am_file_name,&table))
+    if(start_first_pass(am_file_name,&table)){
+
+    }
     return 0;
 }

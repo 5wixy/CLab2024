@@ -10,7 +10,7 @@
 
 
 
-void process_label_line(char *line, char *first_word, HashTable *table, int IC) {
+void process_label_line(char *line, char *first_word, HashTable *table, int *IC,int *DC,char *memory_array) {
     inst_parts *inst = malloc_helper(sizeof(inst_parts));
     if (inst == NULL) {
         fprintf(stderr, "Memory allocation failed for inst_parts\n");
@@ -20,8 +20,6 @@ void process_label_line(char *line, char *first_word, HashTable *table, int IC) 
     char line_copy[MAX_LINE_LEN];
     strcpy(line_copy, line);
 
-    // Debug: Print the line to be processed
-    printf("Processing line: %s\n", line);
 
     // Skip the first word (label)
     skip_first_word(line);
@@ -34,28 +32,44 @@ void process_label_line(char *line, char *first_word, HashTable *table, int IC) 
         printf("Second word: %s\n", second_word);
     } else {
         printf("ERROR: No second word found\n");
+        free(inst);
+        return;
     }
 
     if (second_word) {
-        if (match_opcodes(second_word) > -1) {
-            // It's an operation
-            process_labeled_operation(first_word, line_copy, table, IC);
-        } else if (is_data_or_string(second_word)) {
-            // It's a directive
-            process_data_or_string(first_word, second_word, strtok(NULL, ""), table, IC);
+        // Find the position of the second word in the original line
+        char *second_word_pos = strstr(line_copy, second_word);
+        if (second_word_pos) {
+            // Move past the second word to get the rest of the line
+            char *rest_of_line = second_word_pos + strlen(second_word);
+
+            // Skip any leading whitespace in the rest of the line
+            while (isspace(*rest_of_line)) {
+                rest_of_line++;
+            }
+
+            if (match_opcodes(second_word) > -1) {
+                // It's an operation
+                process_labeled_operation(first_word, line_copy, table, IC,memory_array);
+            } else if (is_data_or_string(second_word)) {
+                // It's a directive
+                process_data_or_string(first_word, second_word, rest_of_line, table, IC,DC,memory_array);
+            } else {
+                printf("ERROR: Unknown directive or operation.\n");
+            }
         } else {
-            printf("ERROR: Unknown directive or operation.\n");
+            printf("ERROR: Second word not found in line copy\n");
         }
     } else {
         printf("ERROR: Missing directive or operation.\n");
     }
 
-    // Free allocated memory (if any) and handle errors properly
+    // Free allocated memory (if any)
     free(inst);
 }
 
 
-void process_labeled_operation(char *label_name, char *line, HashTable *table, int IC) {
+void process_labeled_operation(char *label_name, char *line, HashTable *table, int *IC,char *memory_array) {
     line = remove_newline(line);
     command_parts *command = malloc_helper(sizeof(command_parts));
     if (command == NULL) {
@@ -86,12 +100,10 @@ void process_labeled_operation(char *label_name, char *line, HashTable *table, i
     int operand_index = 0;
     while ((operand = strtok(NULL, " ,")) != NULL) {
         if (operand_index == 0) {
-            // Handle special cases for operations like PRN
             if (command->opcode < RTS && command->opcode > LEA) {
                 command->dest = strdup(operand);
-                // Ensure source is NULL for PRN
                 command->source = NULL;
-                break; // Exit loop as we only expect one operand for PRN
+                break; // Only one operand expected for PRN
             } else {
                 command->source = strdup(operand);
             }
@@ -102,59 +114,152 @@ void process_labeled_operation(char *label_name, char *line, HashTable *table, i
     }
 
     // Validate operands based on opcode
+
+
+    // Insert the label into the hash table
+    insert_label(table, command->label, *IC, "instruction", 0);
+    increment_IC(line,IC);
     if (!is_valid_command(command)) {
-        // Handle invalid command scenario
         free(command->source);
         free(command->dest);
         free(command);
         return;
     }
-
-    // Insert the label into the hash table
-    insert_label(table, command->label, IC, "instruction", 0);
-
     // Clean up
     if (command->source) {
         free(command->source);
-        command->source = NULL;
     }
     if (command->dest) {
         free(command->dest);
-        command->dest = NULL;
     }
     free(command);
-    command = NULL;
 }
-void process_data_or_string(char *label_name, char *directive, char *remaining_line, HashTable *table, int IC) {
+void process_data_or_string(char *label_name, char *directive, char *remaining_line, HashTable *table, int *IC,int *DC,char *memory_array) {
     if (strcmp(directive, ".data") == 0) {
-        process_data_directive(label_name, remaining_line, table, IC);
+        process_data_directive(label_name, remaining_line, table, IC,DC,memory_array);
     } else if (strcmp(directive, ".string") == 0) {
-        process_string_directive(label_name, remaining_line, table, IC);
+        process_string_directive(label_name, remaining_line, table, IC,DC,memory_array);
     } else {
         printf("ERROR: Unknown directive.\n");
     }
 }
 
-void process_data_directive(char *label_name, char *line, HashTable *table, int IC) {
-    // Implement the processing of .data directive
-    // Example: parse numbers and store them in the hash table
-    // ...
+void process_data_directive(char *label_name, char *line, HashTable *table, int *IC,int *DC,char *memory_array) {
+    int i;
+    inst_parts *inst = malloc_helper(sizeof(inst_parts));
+    if (inst == NULL) {
+        fprintf(stderr, "Memory allocation failed for inst_parts\n");
+        return;
+    }
+
+
+    int count_nums = 0;
+    if (is_valid_input(line)) {
+        count_nums = count_numbers(line);
+    } else {
+        printf("Invalid input line\n");
+        free(inst);
+        return;
+    }
+
+    inst->nums = malloc_helper(count_nums * sizeof(short));
+    if (inst->nums == NULL) {
+        fprintf(stderr, "Memory allocation failed for nums array\n");
+        free(inst);
+        return;
+    }
+
+    fill_nums_array(line, inst->nums, count_nums);
+
+    // Debug: Print the nums array
+
+
+    // Insert the label into the hash table
+    if(label_name != NULL) {
+        insert_label(table, label_name, *IC, "data", 0);
+    }
+    // Increment IC based on data size
+    *IC += count_nums;
+
+    // Free allocated memory
+    free(inst->nums);
+    free(inst);
 }
 
-void process_string_directive(char *label_name, char *line, HashTable *table, int IC) {
-    // Implement the processing of .string directive
-    // Example: store the string in the hash table
-    // ...
+void process_string_directive(char *label_name, char *line, HashTable *table, int *IC, int *DC, char memory_array[][WORD_SIZE]) {
+    size_t i;
+    if (line == NULL || IC == NULL || DC == NULL || memory_array == NULL) {
+        printf("Error: NULL pointer provided.\n");
+        return;
+    }
+
+    // Remove leading and trailing whitespace
+    remove_trailing_newline(line);
+    char trimmed_line[MAX_LINE_LEN];
+    strncpy(trimmed_line, line, sizeof(trimmed_line) - 1);
+    trimmed_line[sizeof(trimmed_line) - 1] = '\0';
+
+    // Check for the string delimiters
+    char *start = strchr(trimmed_line, '"');
+    if (start == NULL) {
+        printf("ERROR: String does not start with \"\n");
+        return;
+    }
+
+    char *end = strrchr(trimmed_line, '"');
+    if (end == NULL || end == start) {
+        printf("ERROR: String does not end with \"\n");
+        return;
+    }
+
+    // Extract the string between the quotes
+    size_t string_length = end - start - 1;
+    char string_content[MAX_LINE_LEN];
+    strncpy(string_content, start + 1, string_length);
+    string_content[string_length] = '\0';  // Null-terminate the string
+
+    // Calculate the total length including the null terminator
+    size_t total_length = string_length + 1;  // Include the null terminator
+
+    // Calculate the number of 15-bit words needed
+    size_t num_words = (total_length + 1) / 2;  // Each word is 15 bits, so 2 bytes
+    num_words += (total_length % 2 == 0) ? 0 : 1;  // If odd length, add one more word
+
+    // Initialize index for memory_array
+    size_t index = *IC;
+
+    // Convert each character to a 15-bit binary string and store in memory_array
+    char binary_char[16];  // Temporary buffer for one 15-bit binary string
+    for (i = 0; i < total_length; i++) {
+        ascii_to_15_bit_binary(string_content[i], binary_char, sizeof(binary_char));
+
+        // Copy 15-bit binary string into memory_array
+        strncpy(memory_array[index], binary_char, WORD_SIZE);
+        index++;
+    }
+
+    // Handle the case where we need to add padding if total_length is odd
+    if (total_length % 2 != 0) {
+        // Add the padding binary string
+        ascii_to_15_bit_binary('\0', binary_char, sizeof(binary_char));
+        strncpy(memory_array[index], binary_char, WORD_SIZE);
+    }
+
+    // Update the data counter (DC) and insert the string into the hash table
+    *DC = *IC;
+    *DC += num_words;
+    printf("Updated DC: %d\n", *DC);
+    if (label_name != NULL) {
+        insert_label(table, label_name, *DC, "data", 0);
+    }
 }
 
 
 int start_first_pass(char* file_name, HashTable* table) {
-    int IC = 100, DC = 0;
-    HashTable *entries,*externals;
-    //TODO take care of entries and externals tables.
-    command_parts *command;
+    int IC = 100;
+    int DC = 0;
+    char *memory_array;
     FILE* fp;
-    int label_flag = 0;
     char str[MAX_LINE_LEN];
 
     fp = fopen(file_name, "r");
@@ -164,46 +269,36 @@ int start_first_pass(char* file_name, HashTable* table) {
     }
 
     while (fgets(str, sizeof(str), fp)) {
-        label_flag = 0;
         char line_copy[MAX_LINE_LEN];
         strncpy(line_copy, str, sizeof(line_copy) - 1);
         char* first_word = get_first_word(str);
-        //TODO work on line processing. entry extern , label, operation.
-        if(strchr(str,'.')){
-            if(strstr(line_copy, ".entry") || strstr(line_copy, ".extern")){
-                if(strstr(line_copy,".extern")){
-                    //TODO check validity
-                    strtok(line_copy," ");
+        if (strchr(str, '.')) {
+            if (strstr(line_copy, ".entry") || strstr(line_copy, ".extern")) {
+                if (strstr(line_copy, ".extern")) {
+                    strtok(line_copy, " ");
                     char *extern_label = strtok(NULL, " ");
-                    process_extern(extern_label,table);
-                    continue;
-
-                }
-                if(strstr(line_copy,".entry")){
-                    strtok(line_copy," ");
+                    process_extern(extern_label, table);
+                } else if (strstr(line_copy, ".entry")) {
+                    strtok(line_copy, " ");
                     char *entry_label = strtok(NULL, " ");
-                    process_entry(entry_label,table);
-                    continue;
-
+                    process_entry(entry_label, table);
                 }
-
             }
         }
-        else if (first_word[strlen(first_word) - 1] == ':') {
-            label_flag = 1;
-           // printf("%s\n",str);
+
+        if (first_word[strlen(first_word) - 1] == ':') {
+            printf("label = %s, ADDRESS = %d\n",first_word,IC);
             is_data_or_string(line_copy);
-            process_label_line(str, first_word, table, IC);
+            process_label_line(str, first_word, table, &IC,&DC,memory_array);
+
+        } else if (is_data_instruction(first_word)) {
+            process_data_or_string(NULL,first_word,line_copy,table,&IC,&DC,memory_array);
+
+        } else {
+            // Normal operation without label
+            printf("OPERATION = %s, ADDRESS = %d\n",first_word,IC);
+            increment_IC(line_copy,&IC);
         }
-
-        else if(is_data_instruction(first_word)){
-            //printf(first_word);
-
-        }
-        else{
-        IC++;
-            }
-
     }
 
     fclose(fp);

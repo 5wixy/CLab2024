@@ -20,4 +20,4 @@ add_executable(CLab "C Files/main.c"
         "C Files/am_handler.c"
         "Header Files/am_handler.h"
         "C Files/code_binary.c"
-        "C Files/code_binary.h")
+        "Header Files/code_binary.h")
