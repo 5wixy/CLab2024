@@ -14,9 +14,10 @@
 #define IMMEDIATE 0
 #define DIRECT 1
 #define REGISTER_POINTER 2
+#define REGISTER_DIRECT 3
 #define MEMORY_SIZE 4096
 #define WORD_SIZE 15
-#define REGISTER_DIRECT 3
+
 typedef enum {
     MOV = 0,
     CMP = 1,
@@ -35,4 +36,21 @@ typedef enum {
     RTS = 14,
     STOP = 15
 } OPCODE_NAME;
+#define R0_VALUE 0
+#define R1_VALUE 1
+#define R2_VALUE 2
+#define R3_VALUE 3
+#define R4_VALUE 4
+#define R5_VALUE 5
+#define R6_VALUE 6
+#define R7_VALUE 7
+// Add other register values as necessary...
+
+// Struct to map register names to values
+typedef struct {
+    const char *name;
+    int value;
+} Register;
+
+// Lookup table for register values
 #endif //CLAB_GLOBALS_H

@@ -9,7 +9,17 @@
 #include "../Header Files/preproc.h"
 #include "../Header Files//helper.h"
 #include "../Header Files/globals.h"
-
+Register register_table[] = {
+        {"r0", R0_VALUE},
+        {"r1", R1_VALUE},
+        {"r2", R2_VALUE},
+        {"r3", R3_VALUE},
+        {"r4", R4_VALUE},
+        {"r5", R5_VALUE},
+        {"r6", R6_VALUE},
+        {"r7", R7_VALUE},
+        // Add other registers here...
+};
 char *copy_text(FILE *fp, fpos_t *pos, int str_len) {
     char *str;
 
@@ -44,12 +54,35 @@ void fill_nums_array(const char *line, short *nums, int count) {
     const char *ptr = line;
     char *endptr;
     int i;
+
     for (i = 0; i < count; i++) {
+        // Skip non-numeric characters and delimiters
+        while (*ptr && (!isdigit(*ptr) && *ptr != '-' && *ptr != '+')) {
+            ptr++;
+        }
+
+        if (*ptr == '\0') {
+            // End of string reached, no more numbers to read
+            break;
+        }
+
         nums[i] = (short)strtol(ptr, &endptr, 10);
-        ptr = endptr;
+
+        if (ptr == endptr) {
+            // No valid conversion, handle the error if necessary
+            break;
+        }
+
+        ptr = endptr;  // Move the pointer to the next character after the last parsed number
+
+        // Skip any whitespace or delimiters
+        while (*ptr == ' ' || *ptr == '\t' || *ptr == ',') {
+            ptr++;
+        }
     }
 }
 int detect_addressing_method(char *operand) {
+    remove_commas(operand);
     if (operand[0] == '#') {
         return IMMEDIATE; // Immediate value
     } else if (operand[0] == '*') {
@@ -61,11 +94,62 @@ int detect_addressing_method(char *operand) {
     }
 
 
+
     else {
         return DIRECT; // Direct addressing (label by name)
     }
 }
 
+
+
+
+int get_register_value(const char *register_name) {
+    remove_commas(register_name);
+    trim_spaces(register_name);
+    size_t num_registers = sizeof(register_table) / sizeof(register_table[0]);
+    size_t i;
+    for (i = 0; i < num_registers; i++) {
+        if (strcmp(register_name, register_table[i].name) == 0) {
+            return register_table[i].value;
+        }
+    }
+    // Return -1 if the register is not found
+    return -1;
+}
+void trim_spaces(char *str) {
+    char *end;
+
+    // Trim leading spaces
+    while (isspace((unsigned char)*str)) str++;
+
+    // If all spaces or empty string
+    if (*str == 0) {
+        str[0] = '\0';
+        return;
+    }
+
+    // Trim trailing spaces
+    end = str + strlen(str) - 1;
+    while (end > str && isspace((unsigned char)*end)) end--;
+
+    // Write new null terminator
+    *(end + 1) = 0;
+}
+void to_binary_string(int num, int bits, char *output) {
+    int i;
+    for (i = bits - 1; i >= 0; i--) {
+        output[bits - 1 - i] = (num & (1 << i)) ? '1' : '0';
+    }
+    output[bits] = '\0';
+
+}
+void int_to_binary(int value, char *binary_str, int length) {
+    int i;
+    for (i = length - 1; i >= 0; i--) {
+        binary_str[i] = (value & (1 << (length - 1 - i))) ? '1' : '0';
+    }
+    binary_str[length] = '\0'; // Null-terminate the string
+}
 void remove_trailing_newline(char *str) {
     size_t len = strlen(str);
 
@@ -76,10 +160,6 @@ void remove_trailing_newline(char *str) {
 }
 void ascii_to_15_bit_binary(char ch, char *binary_str, size_t max_len) {
     int i;
-    if (binary_str == NULL || max_len < 16) {
-        printf("Error: Invalid pointer or insufficient buffer length.\n");
-        return;
-    }
 
     // Ensure the buffer is zeroed out
     memset(binary_str, '0', max_len);
@@ -91,14 +171,34 @@ void ascii_to_15_bit_binary(char ch, char *binary_str, size_t max_len) {
     }
 }
 
-// Function to count the number of 15-bit words needed
-size_t count_15_bit_words(size_t total_length) {
-    // Each 15-bit word corresponds to 2 bytes
-    size_t num_words = (total_length + 1) / 2;  // +1 to account for null terminator
-    if (total_length % 2 != 0) {
-        num_words++;
+char* to_binary(short num) {
+    int i;
+    char* binary = (char*)malloc(WORD_SIZE); // 32 bits + null terminator
+    if (binary == NULL) {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
     }
-    return num_words;
+    binary[WORD_SIZE] = '\0'; // Null terminator
+
+    for (i = WORD_SIZE-1; i >= 0; i--) {
+        binary[i] = (num & 1) ? '1' : '0';
+        num >>= 1;
+    }
+
+    return binary;
+}
+void twos_complement(char* binary) {
+    int carry = 1; // Initially adding 1
+    int i;
+    for (i = WORD_SIZE - 1; i >= 0; i--) {
+        // Flip the bit and add carry
+        if (binary[i] == '1') {
+            binary[i] = (carry == 1) ? '0' : '1';
+        } else {
+            binary[i] = (carry == 1) ? '1' : '0';
+            carry = 0; // No further carry needed after adding 1
+        }
+    }
 }
 void extract_operands(const char *line, char *source, char *dest) {
     char line_copy[MAX_LINE_LEN];
@@ -121,8 +221,12 @@ void extract_operands(const char *line, char *source, char *dest) {
     if (opcode == NULL) {
         // Handle error: No opcode found
         printf("ERROR: No opcode found.\n");
-        source[0] = '\0';
-        dest[0] = '\0';
+        if (source != NULL) {
+            source[0] = '\0';
+        }
+        if (dest != NULL) {
+            dest[0] = '\0';
+        }
         return;
     }
 
@@ -133,17 +237,49 @@ void extract_operands(const char *line, char *source, char *dest) {
         char *next_operand = strtok(NULL, " ,");
         if (next_operand != NULL) {
             // Two operands present
-            strcpy(source, operand);
-            strcpy(dest, next_operand);
+            if (source != NULL) {
+                strcpy(source, operand);
+            }
+            if (dest != NULL) {
+                strcpy(dest, next_operand);
+            }
         } else {
             // Only one operand present; treat it as the destination
-            source[0] = '\0';  // Ensure source is an empty string
-            strcpy(dest, operand);
+            if (source != NULL) {
+                source[0] = '\0';  // Ensure source is an empty string
+            }
+            if (dest != NULL) {
+                strcpy(dest, operand);
+            }
         }
     } else {
         // No operands present
-        source[0] = '\0';  // Ensure source is an empty string
-        dest[0] = '\0';    // Ensure dest is an empty string
+        if (source != NULL) {
+            source[0] = '\0';  // Ensure source is an empty string
+        }
+        if (dest != NULL) {
+            dest[0] = '\0';    // Ensure dest is an empty string
+        }
+    }
+}
+void addressing_method_to_binary(int method, char *output) {
+    switch (method) {
+        case 0:
+            strcpy(output, "0001");
+            break;
+        case 1:
+            strcpy(output, "0010");
+            break;
+        case 2:
+            strcpy(output, "0100");
+            break;
+        case 3:
+            strcpy(output, "1000");
+            break;
+        default:
+            // Handle invalid method index if necessary
+            strcpy(output, "0000");  // Default to an invalid or error code
+            break;
     }
 }
 

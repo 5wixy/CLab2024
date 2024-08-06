@@ -6,11 +6,11 @@
 int main() {
     HashTable table;
     init_hashtable(&table);
-    const char *file_name = "D:\\CLab\\basic_test.as";
+    char *file_name = "D:\\CLab\\basic_test.as";
     if (expand_macro(file_name,&table) != 0) {
         return 1; // Error occurred
     }
-    const char *am_file_name = "D:\\CLab\\basic_test.am";
+    char *am_file_name = "D:\\CLab\\basic_test.am";
     if(start_first_pass(am_file_name,&table)){
 
     }

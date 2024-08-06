@@ -23,4 +23,5 @@ int is_label_macro_name_collision(HashTable *ht,char *label_name);
 int is_legal_label(char *str);
 int get_operand_count(const char *name);
 char* is_data_or_string(char *line);
+int is_external_label(const char *label,HashTable *table);
 #endif //CLAB_VALIDATION_H

@@ -9,6 +9,8 @@
 #include "../Header Files/validation.h"
 #include "../Header Files/helper.h"
 #include "../Header Files/am_handler.h"
+#include "../Header Files/hash_table.h"
+#include "../Header Files/first_pass.h"
 
 char* get_first_word(char *str) {
     char line_copy[MAX_LINE_LEN];
@@ -26,29 +28,6 @@ char* get_first_word(char *str) {
         return first_word;
     } else {
         return NULL;
-    }
-}
-void break_line_to_words(char *str, char *tokens[], int max_tokens) {
-    char *token;
-    int token_count = 0;
-    remove_commas(str);
-    int i;
-    // Initialize token array to NULL
-    for (i = 0; i < max_tokens; i++) {
-        tokens[i] = NULL;
-    }
-
-    // Get the first token
-    token = strtok(str, " ");
-
-    // Walk through the rest of the tokens
-    while (token != NULL && token_count < max_tokens) {
-        tokens[token_count] = (char *)malloc(strlen(token) + 1);
-        if (tokens[token_count] != NULL) {
-            strcpy(tokens[token_count], token);
-            token_count++;
-        }
-        token = strtok(NULL, " ");
     }
 }
 void remove_commas(char *str) {
@@ -271,25 +250,240 @@ void increment_IC(char *line, int *IC) {
     // Extract operands from the line
     extract_operands(line, source, dest);
 
-    // Determine the addressing methods for both operands
-    int src_method = detect_addressing_method(source);
-    int dest_method = detect_addressing_method(dest);
+    // Calculate the increment amount
+    int increment = calculate_increment(source, dest);
 
-    // Increment IC based on addressing methods
+    // Apply the increment to IC
+    apply_increment(IC, increment);
+}
+
+int calculate_increment(const char *source, const char *dest) {
+    int src_method = (source != NULL) ? detect_addressing_method(source) : -1;
+    int dest_method = (dest != NULL) ? detect_addressing_method(dest) : -1;
+
+    // Determine the increment amount based on the addressing methods
     if ((src_method == REGISTER_POINTER || src_method == REGISTER_DIRECT) &&
         (dest_method == REGISTER_POINTER || dest_method == REGISTER_DIRECT)) {
-        *IC += 2;  // Both operands are using addressing methods 2 or 3
-    } else if(src_method == -1 && (dest_method == IMMEDIATE || dest_method == REGISTER_DIRECT || dest_method == REGISTER_POINTER || dest_method == DIRECT)){
-        *IC+=2;
+        return 2;  // Both operands are using register addressing methods
+    } else if (src_method == -1 && dest_method == -1) {
+        return 1;  // No operands
+    } else if (src_method == -1) {
+        return 2;  // No source operand, only destination operand
+    } else {
+        return 3;  // At least one operand is not using a register addressing method
+    }
+}
+
+void apply_increment(int *IC, int increment) {
+    *IC += increment;
+}
+void process_operand(const char *operand, int addressing_method, char *output, int *num_words, int position,HashTable *table) {
+    switch (addressing_method) {
+        case IMMEDIATE:
+            process_immediate_operand(operand, output);
+            //(*num_words)++;
+            break;
+        case DIRECT:
+            process_direct_operand(operand, output,table);
+            //(*num_words)++;
+            break;
+        case REGISTER_POINTER:
+        case REGISTER_DIRECT:
+            process_register_operand(operand, output, position);
+            break;
+        default:
+            break;
+    }
+}
+void process_register_operand(const char *operand, char *output, int position) {
+    int reg_value = get_register_value(operand);
+
+    // Initialize the output string to all zeros
+    memset(output, '0', 15);
+
+    // Convert the register value to a binary string and place it in the correct position
+    char binary[4];  // 3 bits for the register and 1 for null-termination
+    to_binary_string(reg_value, 3, binary);
+
+    // Copy the binary string into the output at the specified position
+    strncpy(output + position, binary, 3);
+
+    // Set the ARE field to 100 in one line
+    strncpy(output + 12, "100", 3);
+
+    // Null-terminate the output string if necessary
+    output[15] = '\0';
+}
+void process_direct_operand(const char *operand, char *output,HashTable *table) {
+    int address = get_label_address(operand,table);
+    to_binary_string(address, 12, output);
+    if (is_external_label(operand,table)) {
+        strncpy(output + 12, "001", 3);
+    } else {
+        strncpy(output + 12, "010", 3);
+    }
+    output[15] = '\0';
+}
+void process_immediate_operand(const char *operand, char *output) {
+    int value = atoi(operand + 1); // Skip '#'
+    to_binary_string(value, 12, output);
+    strncpy(output + 12, "100", 3);
+    output[15] = '\0';
+}
+void create_first_word(int opcode, int src_method, int dest_method, char *output) {
+    char opcode_bin[5];
+    char src_method_bin[5];
+    char dest_method_bin[5];
+    char are_field[] = "100";
+
+    // Convert opcode to 4-bit binary
+    to_binary_string(opcode, 4, opcode_bin);
+
+    // Convert addressing methods to 4-bit binary
+    addressing_method_to_binary(src_method, src_method_bin);
+    addressing_method_to_binary(dest_method, dest_method_bin);
+
+    // Create the first word binary string
+    strncpy(output, opcode_bin, 4);
+    strncpy(output + 4, src_method_bin, 4);
+    strncpy(output + 8, dest_method_bin, 4);
+    strncpy(output + 12, are_field, 3);
+    output[15] = '\0';
+}
+void transform_to_binary(const char *line, char binary_output[][WORD_SIZE], int *num_words, HashTable *table) {
+    char label[MAX_LABEL_NAME_LEN] = {0};
+    char instruction[10] = {0};
+    char src_operand[80] = {0};
+    char dest_operand[80] = {0};
+    int opcode, src_method, dest_method;
+    char line_copy[MAX_LINE_LEN];
+
+    // Make a copy of the line to work with
+    strncpy(line_copy, line, sizeof(line_copy) - 1);
+    line_copy[sizeof(line_copy) - 1] = '\0';
+
+    // Tokenize the line using strtok
+    char *token = strtok(line_copy, " \t");
+    if (token == NULL) {
+        return; // Empty or invalid line
     }
 
-    else if (src_method == REGISTER_POINTER || src_method == REGISTER_DIRECT ||
-               dest_method == REGISTER_POINTER || dest_method == REGISTER_DIRECT) {
-        *IC += 3;  // One operand uses addressing method 2 or 3
-    } else {
-        *IC += 1;  // No operands or other addressing methods
+    // Check for a label
+    if (token[strlen(token) - 1] == ':') {
+        strncpy(label, token, sizeof(label) - 1);
+        token = strtok(NULL, " \t");
+    }
+
+    // Get the instruction
+    if (token != NULL) {
+        strncpy(instruction, token, sizeof(instruction) - 1);
+        token = strtok(NULL, " \t,");
+    }
+
+    // Get the source operand
+    if (token != NULL) {
+        strncpy(src_operand, token, sizeof(src_operand) - 1);
+        token = strtok(NULL, " \t,");
+    }
+
+    // Get the destination operand if it exists
+    if (token != NULL) {
+        strncpy(dest_operand, token, sizeof(dest_operand) - 1);
+    }
+
+    // Trim spaces around operands
+    trim_spaces(src_operand);
+    trim_spaces(dest_operand);
+
+    // If only one operand is present, it should be the destination
+    if (strlen(dest_operand) == 0 && strlen(src_operand) > 0) {
+        strcpy(dest_operand, src_operand);
+        src_operand[0] = '\0'; // Set src_operand to empty string
+    }
+
+    // Get opcode and addressing methods
+    opcode = match_opcodes(instruction);
+    src_method = detect_addressing_method(src_operand);
+    dest_method = detect_addressing_method(dest_operand);
+
+    // Create the first binary word after setting the correct operands
+    create_first_word(opcode, src_method, dest_method, binary_output[0]);
+    *num_words = 1;
+
+    // Process both source and destination operands if they are registers
+    if (src_method == REGISTER_DIRECT || src_method == REGISTER_POINTER) {
+        if (dest_method == REGISTER_DIRECT || dest_method == REGISTER_POINTER) {
+            process_register_operands(src_operand, dest_operand, binary_output[*num_words]);
+            (*num_words)++;
+            return; // Done processing both operands
+        }
+    }
+
+    // Process source operand if it exists and is not empty
+    if (src_operand[0] != '\0') {
+        process_operand(src_operand, src_method, binary_output[*num_words], num_words, 6, table);
+        (*num_words)++;
+    }
+
+    // Process destination operand if it exists and is not empty
+    if (dest_operand[0] != '\0') {
+        process_operand(dest_operand, dest_method, binary_output[*num_words], num_words, 9, table);
+        (*num_words)++;
     }
 }
 
 
+int get_label_address(const char *label,HashTable *table) {
+    if(label != NULL){
+    get(table,label);
+    }
+    return -1;
+}
+void handle_directive_or_label(char *line_copy, char *first_word, HashTable *symbol_table, int *IC, int *DC, AssemblyData *ad) {
+    char *label = NULL;
+    char *directive = NULL;
+    char *remaining_line = NULL;
 
+    if (strchr(first_word, ':')) {
+        // Labeled directive
+        label = strtok(line_copy, ":");
+        directive = strtok(NULL, " \t");
+        remaining_line = strtok(NULL, "");
+
+        if (directive == NULL) {
+            printf("ERROR: Missing directive after label.\n");
+            return;
+        }
+    } else {
+        // Unlabeled directive
+        directive = first_word;
+        remaining_line = strchr(line_copy, directive[0]);
+    }
+
+    process_data_or_string(label, directive, remaining_line, symbol_table, IC, DC, ad);
+}
+
+
+void process_register_operands(const char *src_operand, const char *dest_operand, char *output) {
+    int src_reg_value = get_register_value(src_operand);
+    int dest_reg_value = get_register_value(dest_operand);
+
+    // Initialize the output string to all zeros
+    memset(output, '0', 15);
+
+    // Convert the source register value to binary and place it in bits 6-8
+    char src_binary[4]; // 3 bits for the register value and 1 for null-termination
+    to_binary_string(src_reg_value, 3, src_binary);
+    strncpy(output + 6, src_binary, 3);
+
+    // Convert the destination register value to binary and place it in bits 9-11
+    char dest_binary[4];
+    to_binary_string(dest_reg_value, 3, dest_binary);
+    strncpy(output + 9, dest_binary, 3);
+
+    // Set the ARE field to 100 in bits 13-15
+    strncpy(output + 12, "100", 3);
+
+    // Null-terminate the output string if necessary
+    output[15] = '\0';
+}

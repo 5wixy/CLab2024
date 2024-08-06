@@ -69,6 +69,12 @@ int is_label_macro_name_collision(HashTable *ht,char *label_name){
 
     return 0; // No collision found
 }
+int is_external_label(const char *label,HashTable *table){
+
+
+
+
+}
 
 
 
