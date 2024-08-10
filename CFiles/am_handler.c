@@ -2,15 +2,16 @@
 // Created by gyank on 01/08/2024.
 //
 #include "string.h"
-#include "../Header Files/globals.h"
+#include "../HeaderFiles/globals.h"
 #include <ctype.h>
 #include "stdlib.h"
 #include "stdio.h"
-#include "../Header Files/validation.h"
-#include "../Header Files/helper.h"
-#include "../Header Files/am_handler.h"
-#include "../Header Files/hash_table.h"
-#include "../Header Files/first_pass.h"
+#include "../HeaderFiles/validation.h"
+#include "../HeaderFiles/helper.h"
+#include "../HeaderFiles/am_handler.h"
+#include "../HeaderFiles/data_strct.h"
+#include "../HeaderFiles/hash_table.h"
+#include "../HeaderFiles/first_pass.h"
 
 char* get_first_word(char *str) {
     char line_copy[MAX_LINE_LEN];
@@ -161,10 +162,6 @@ int find_register_index( char *reg_name) {
     }
     return -1; // Return -1 if the register name is not found
 }
-int is_data_instruction(char *word) {
-    // Implement this function to check if the word is a data instruction (.data or .string)
-    return (strcmp(word, ".data") == 0 || strcmp(word, ".string") == 0);
-}
 
 int is_valid_command(command_parts *command){
 
@@ -243,15 +240,10 @@ int is_valid_command(command_parts *command){
 
     return 1;
 }
-void increment_IC(char *line, int *IC) {
-    char source[80] = {0};
-    char dest[80] = {0};
-
-    // Extract operands from the line
-    extract_operands(line, source, dest);
+void increment_IC(AssemblyLine line, int *IC) {
 
     // Calculate the increment amount
-    int increment = calculate_increment(source, dest);
+    int increment = calculate_increment(line.src_operand, line.dest_operand);
 
     // Apply the increment to IC
     apply_increment(IC, increment);
@@ -350,84 +342,53 @@ void create_first_word(int opcode, int src_method, int dest_method, char *output
     strncpy(output + 12, are_field, 3);
     output[15] = '\0';
 }
-void transform_to_binary(const char *line, char binary_output[][WORD_SIZE], int *num_words, HashTable *table) {
-    char label[MAX_LABEL_NAME_LEN] = {0};
-    char instruction[10] = {0};
-    char src_operand[80] = {0};
-    char dest_operand[80] = {0};
-    int opcode, src_method, dest_method;
-    char line_copy[MAX_LINE_LEN];
+void swap_src_dest(AssemblyLine *line){
+    if (line->dest_operand == NULL && line->src_operand != NULL && strlen(line->src_operand) > 0) {
+        // Allocate memory for dest_operand
+        line->dest_operand = malloc_helper(strlen(line->src_operand) + 1);
+        if (line->dest_operand == NULL) {
+            // Handle memory allocation failure
+            return; // or handle the error appropriately
+        }
 
-    // Make a copy of the line to work with
-    strncpy(line_copy, line, sizeof(line_copy) - 1);
-    line_copy[sizeof(line_copy) - 1] = '\0';
+        // Copy src_operand to dest_operand
+        strcpy(line->dest_operand, line->src_operand);
 
-    // Tokenize the line using strtok
-    char *token = strtok(line_copy, " \t");
-    if (token == NULL) {
-        return; // Empty or invalid line
+        // Clear src_operand
+        line->src_operand = NULL; // Set src_operand to empty string
     }
+}
+void transform_to_binary(AssemblyLine *line, char binary_output[][WORD_SIZE], int *num_words, HashTable *table) {
 
-    // Check for a label
-    if (token[strlen(token) - 1] == ':') {
-        strncpy(label, token, sizeof(label) - 1);
-        token = strtok(NULL, " \t");
-    }
-
-    // Get the instruction
-    if (token != NULL) {
-        strncpy(instruction, token, sizeof(instruction) - 1);
-        token = strtok(NULL, " \t,");
-    }
-
-    // Get the source operand
-    if (token != NULL) {
-        strncpy(src_operand, token, sizeof(src_operand) - 1);
-        token = strtok(NULL, " \t,");
-    }
-
-    // Get the destination operand if it exists
-    if (token != NULL) {
-        strncpy(dest_operand, token, sizeof(dest_operand) - 1);
-    }
-
-    // Trim spaces around operands
-    trim_spaces(src_operand);
-    trim_spaces(dest_operand);
-
-    // If only one operand is present, it should be the destination
-    if (strlen(dest_operand) == 0 && strlen(src_operand) > 0) {
-        strcpy(dest_operand, src_operand);
-        src_operand[0] = '\0'; // Set src_operand to empty string
-    }
+    int  src_method, dest_method;
 
     // Get opcode and addressing methods
-    opcode = match_opcodes(instruction);
-    src_method = detect_addressing_method(src_operand);
-    dest_method = detect_addressing_method(dest_operand);
+
+    src_method = detect_addressing_method(line->src_operand);
+    dest_method = detect_addressing_method(line->dest_operand);
 
     // Create the first binary word after setting the correct operands
-    create_first_word(opcode, src_method, dest_method, binary_output[0]);
+    create_first_word(line->opcode, src_method, dest_method, binary_output[0]);
     *num_words = 1;
 
     // Process both source and destination operands if they are registers
     if (src_method == REGISTER_DIRECT || src_method == REGISTER_POINTER) {
         if (dest_method == REGISTER_DIRECT || dest_method == REGISTER_POINTER) {
-            process_register_operands(src_operand, dest_operand, binary_output[*num_words]);
+            process_register_operands(line->src_operand, line->dest_operand, binary_output[*num_words]);
             (*num_words)++;
             return; // Done processing both operands
         }
     }
 
     // Process source operand if it exists and is not empty
-    if (src_operand[0] != '\0') {
-        process_operand(src_operand, src_method, binary_output[*num_words], num_words, 6, table);
+    if (line->src_operand != NULL) {
+        process_operand(line->src_operand, src_method, binary_output[*num_words], num_words, 6, table);
         (*num_words)++;
     }
 
     // Process destination operand if it exists and is not empty
-    if (dest_operand[0] != '\0') {
-        process_operand(dest_operand, dest_method, binary_output[*num_words], num_words, 9, table);
+    if (line->dest_operand != NULL) {
+        process_operand(line->dest_operand, dest_method, binary_output[*num_words], num_words, 9, table);
         (*num_words)++;
     }
 }
@@ -439,31 +400,19 @@ int get_label_address(const char *label,HashTable *table) {
     }
     return -1;
 }
-void handle_directive_or_label(char *line_copy, char *first_word, HashTable *symbol_table, int *IC, int *DC, AssemblyData *ad) {
-    char *label = NULL;
-    char *directive = NULL;
-    char *remaining_line = NULL;
 
-    if (strchr(first_word, ':')) {
-        // Labeled directive
-        label = strtok(line_copy, ":");
-        directive = strtok(NULL, " \t");
-        remaining_line = strtok(NULL, "");
-
-        if (directive == NULL) {
-            printf("ERROR: Missing directive after label.\n");
-            return;
+void update_label_addresses(HashTable *ht, int IC) {
+    int i;
+    for (i = 0; i < TABLE_SIZE; ++i) {
+        HashItem *entry = ht->table[i];
+        while (entry != NULL) {
+            if (entry->type == TYPE_LABEL) {
+                entry->data.label.address += IC;
+            }
+            entry = entry->next;
         }
-    } else {
-        // Unlabeled directive
-        directive = first_word;
-        remaining_line = strchr(line_copy, directive[0]);
     }
-
-    process_data_or_string(label, directive, remaining_line, symbol_table, IC, DC, ad);
 }
-
-
 void process_register_operands(const char *src_operand, const char *dest_operand, char *output) {
     int src_reg_value = get_register_value(src_operand);
     int dest_reg_value = get_register_value(dest_operand);
@@ -486,4 +435,66 @@ void process_register_operands(const char *src_operand, const char *dest_operand
 
     // Null-terminate the output string if necessary
     output[15] = '\0';
+}
+
+void process_string_directive(AssemblyLine *line, HashTable *table, int *DC, AssemblyData *ad) {
+    int i,j;
+    char binary_output[WORD_SIZE];
+
+    insert_label(table, line->label, *DC,  0,DAT);
+    for (i = 0; i < line->data_count; ++i) {
+        ascii_to_15_bit_binary(line->data_array[i][0], binary_output, WORD_SIZE);
+
+        // Allocate memory for the current data word
+        ad->data[*DC] = malloc_helper(WORD_SIZE);
+        if (ad->data[*DC] == NULL) {
+            // Handle memory allocation failure
+            // Free previously allocated memory and return an error code
+            for (j = 0; j < *DC; ++j) {
+                free(ad->data[j]);
+            }
+            return;
+        }
+
+        // Copy the binary output into the allocated memory
+        strcpy(ad->data[*DC], binary_output);
+        ad->data_count++;
+        (*DC)++;
+    }
+    ad->data[*DC] = "000000000000000";
+    ad->data_count++;
+    (*DC)++;
+}
+void process_data_directive(AssemblyLine *line, HashTable *table, int *DC, AssemblyData *ad) {
+    int i;
+    char binary_output[WORD_SIZE];
+
+    if (line->label) {
+        insert_label(table, line->label, *DC, 0,DAT);
+    }
+    for (i = 0; i < line->data_count; ++i) {
+        // Convert string to short integer
+        short num = (short)atoi(line->data_array[i]);
+
+        // Convert short integer to binary
+        to_binary(num, binary_output);
+
+        // Store binary data (assuming ad->data is a char array and you're storing binary strings)
+        ad->data[*DC] = strdup(binary_output); // Use strdup to allocate memory and copy the binary string
+        if (!ad->data[*DC]) {
+            // Handle memory allocation failure
+            fprintf(stderr, "Memory allocation failed\n");
+            return;
+        }
+        (*DC)++;
+        ad->data_count++;
+    }
+}
+void process_operation_line(AssemblyLine *line, HashTable *table, int *IC, AssemblyData *ad) {
+    if (line->opcode > -1) {
+        // It's an operation
+        process_labeled_operation(line, table, IC, ad);
+    } else {
+        printf("ERROR: Invalid opcode for operation.\n");
+    }
 }

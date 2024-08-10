@@ -53,4 +53,14 @@ typedef struct {
 } Register;
 
 // Lookup table for register values
+#define INITIAL_ALLOCATION_CAPACITY 10
+
+typedef struct {
+    void **allocations;
+    size_t count;
+    size_t capacity;
+} AllocationTracker;
+
+
+
 #endif //CLAB_GLOBALS_H

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../Header Files/macro.h"
+#include "../HeaderFiles/macro.h"
 
 Macro *createMacro(char *name, char *content) {
     Macro *newMacro = (Macro *)malloc(sizeof(Macro));

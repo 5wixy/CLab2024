@@ -1,5 +1,5 @@
-#include "../Header Files/hash_table.h"
-#include "../Header Files/globals.h"
+#include "../HeaderFiles/hash_table.h"
+#include "../HeaderFiles/globals.h"
 #include "string.h"
 #include "stdlib.h"
 
@@ -31,8 +31,10 @@ void insert_macro(HashTable *ht, const char *key, const char *content) {
         newItem->next = ht->table[idx];
         ht->table[idx] = newItem;
     }
+    free(key);
+    free(content);
 }
-void insert_label(HashTable *ht, const char *key, int address, const char *data_or_instruction, int type) {
+void insert_label(HashTable *ht, const char *key, int address, int type,int label_sort) {
     unsigned long idx = hash(key);
 
     // Create a new entry
@@ -44,8 +46,8 @@ void insert_label(HashTable *ht, const char *key, int address, const char *data_
     newItem->name = strdup(key);
     newItem->type = TYPE_LABEL;
     newItem->data.label.address = address;
-    newItem->data.label.data_or_instruction = strdup(data_or_instruction);
     newItem->data.label.type = type;
+    newItem->data.label.label_sort = label_sort;
     newItem->next = NULL;
 
     // Insert into the hash table using chaining for collision resolution
@@ -70,6 +72,20 @@ char *get(HashTable *ht, const char *key) {
 
     return NULL;  // Key not found
 }
+HashItem *get_label(HashTable *ht, const char *key) {
+    unsigned long idx = hash(key);
+    HashItem *entry = ht->table[idx];
+
+    // Traverse the chain at the index
+    while (entry != NULL) {
+        if (strcmp(entry->name, key) == 0) {
+            return entry;  // Found key, return the HashItem
+        }
+        entry = entry->next;
+    }
+
+    return NULL;  // Key not found
+}
 void freeHashTable(HashTable *ht) {
     int i;
     for (i = 0; i < TABLE_SIZE; i++) {
@@ -81,7 +97,7 @@ void freeHashTable(HashTable *ht) {
             if (prev->type == TYPE_MACRO) {
                 free(prev->data.content);
             } else if (prev->type == TYPE_LABEL) {
-                free(prev->data.label.data_or_instruction);
+
             }
             free(prev);
         }
@@ -96,4 +112,17 @@ unsigned long hash(const char *macro_name) {
     }
     return hash % TABLE_SIZE;
 }
+int get_address(HashTable *ht, const char *key) {
+    unsigned long idx = hash(key);
+    HashItem *entry = ht->table[idx];
 
+    // Traverse the chain at the index
+    while (entry != NULL) {
+        if (strcmp(entry->name, key) == 0 && entry->type == TYPE_LABEL) {
+            return entry->data.label.address;  // Found key and it's a label, return address
+        }
+        entry = entry->next;
+    }
+
+    return -1;  // Key not found or not a label
+}

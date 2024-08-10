@@ -1,7 +1,3 @@
-//
-// Created by gyank on 05/08/2024.
-//
-
 #ifndef CLAB_ASM_DATA_H
 #define CLAB_ASM_DATA_H
 typedef struct {
@@ -15,12 +11,12 @@ typedef struct {
     int data_count;
     int data_capacity;
 
-    int IC;  // Instruction Counter
-    int DC;  // Data Counter
+    int IC;  /* Instruction Counter */
+    int DC;  /* Data Counter */
 } AssemblyData;
 
 void init_assembly_data(AssemblyData *ad);
 void free_assembly_data(AssemblyData *ad);
 void add_data(AssemblyData *ad, const char *data, int size);
 void insert_instruction(AssemblyData *ad, char *instruction);
-#endif //CLAB_ASM_DATA_H
+#endif

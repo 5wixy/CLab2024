@@ -3,7 +3,7 @@
 //
 
 #ifndef CLAB_VALIDATION_H
-#include "../Header Files/hash_table.h"
+#include "../HeaderFiles/hash_table.h"
 #include "globals.h"
 
 #define CLAB_VALIDATION_H
@@ -24,4 +24,8 @@ int is_legal_label(char *str);
 int get_operand_count(const char *name);
 char* is_data_or_string(char *line);
 int is_external_label(const char *label,HashTable *table);
+int is_label(const char *token);
+int is_entry_or_extern(const char *line, HashTable *symbol_table, int *IC);
+int is_extern(const char *line);
+int is_entry(const char *line);
 #endif //CLAB_VALIDATION_H

@@ -1,10 +1,12 @@
-#include "../Header Files/validation.h"
-#include "../Header Files/globals.h"
+#include "../HeaderFiles/validation.h"
+#include "../HeaderFiles/globals.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "../Header Files/hash_table.h"
-#include "../Header Files/helper.h"
+#include "../HeaderFiles/hash_table.h"
+#include "../HeaderFiles/helper.h"
+#include "../HeaderFiles/am_handler.h"
+#include "../HeaderFiles/first_pass.h"
 op_code op_arr[] = {{"mov",2},{"cmp",2}, {"add",2} ,{"sub",2} ,
                     {"lea",2},{"clr",1}, {"not",1}, {"inc",1},
                     {"dec",1}, {"jmp",1}, {"bne",1} ,{"red",1},
@@ -69,14 +71,10 @@ int is_label_macro_name_collision(HashTable *ht,char *label_name){
 
     return 0; // No collision found
 }
-int is_external_label(const char *label,HashTable *table){
+int is_external_label(const char *label, HashTable *table) {
 
-
-
-
+    return 0;  /* Label is not marked as external or not found */
 }
-
-
 
 
 
@@ -121,5 +119,51 @@ char* is_data_or_string(char *line){
     if(strcmp(first,".string")==0){
         return "string";
     }
+    return NULL;
+}
+int is_entry_or_extern(const char *line, HashTable *symbol_table, int *IC) {
+    char first_word[MAX_LINE_LEN];
+    char label_name[MAX_LINE_LEN];
+    int result = 0;
+
+    // Copy the line to avoid modifying the original
+    char line_copy[MAX_LINE_LEN];
+    strcpy(line_copy, line);
+
+    // Extract the first word (directive) from the line
+    char *token = strtok(line_copy, " \t");
+    if (token == NULL) {
+        return result;  // No first word found
+    }
+    strcpy(first_word, token);
+
+    // Check if the first word is `.entry` or `.extern`
+    if (strcmp(first_word, ".entry") == 0) {
+        // Get the label name after `.entry`
+        token = strtok(NULL, " \t");
+        if (token != NULL) {
+            strcpy(label_name, token);
+            process_entry(label_name, symbol_table, IC);
+            result = 1;  // Indicates that the line was an `.entry` directive
+        }
+    } else if (strcmp(first_word, ".extern") == 0) {
+        // Get the label name after `.extern`
+        token = strtok(NULL, " \t");
+        if (token != NULL) {
+            process_extern(token, symbol_table);
+            result = 1;  // Indicates that the line was an `.extern` directive
+        }
+    }
+
+    return result;
 }
 
+
+int is_extern(const char *line) {
+    // Check if the line starts with ".extern" and is followed by a space or end of line
+    return strncmp(line, ".extern", 7) == 0 && (line[7] == ' ' || line[7] == '\0');
+}
+int is_entry(const char *line) {
+    // Check if the line starts with ".entry" and is followed by a space or end of line
+    return strncmp(line, ".entry", 6) == 0 && (line[6] == ' ' || line[6] == '\0');
+}

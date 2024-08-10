@@ -1,8 +1,8 @@
-#include "../Header Files/asm_data.h"
+#include "../HeaderFiles/asm_data.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "../Header Files/globals.h"
+#include "../HeaderFiles/globals.h"
 
 void init_assembly_data(AssemblyData *ad) {
     ad->instruction_capacity = 10;
@@ -17,17 +17,45 @@ void init_assembly_data(AssemblyData *ad) {
 }
 
 void free_assembly_data(AssemblyData *ad) {
+    if (ad == NULL) return;
+
     int i;
-    for (i = 0; i < ad->instruction_count; i++) {
-        free(ad->instructions[i]);
+
+    // Free each instruction string if allocated
+    if (ad->instructions != NULL) {
+        for (i = 0; i < ad->instruction_count; i++) {
+            if (ad->instructions[i] != NULL) {
+                int size = strlen(ad->instructions[i]);
+                if(size == 15){
+                    continue;
+                }
+                free(ad->instructions[i]);
+            }
+        }
+        free(ad->instructions);
     }
-    for (i = 0; i < ad->data_count; i++) {
-        free(ad->data[i]);
+
+    // Free each data string if allocated
+    if (ad->data != NULL) {
+        for (i = 0; i < ad->data_count; i++) {
+            if (ad->data[i] != NULL) {
+                int size = strlen(ad->data[i]);
+                if(size == 15){
+                    continue;
+                }
+                free(ad->data[i]);
+            }
+        }
+        free(ad->data);
     }
-    free(ad->instructions);
-    free(ad->instruction_sizes);
-    free(ad->data);
-    free(ad->data_sizes);
+
+    // Free other allocated memory
+    if (ad->instruction_sizes != NULL) {
+        free(ad->instruction_sizes);
+    }
+    if (ad->data_sizes != NULL) {
+        free(ad->data_sizes);
+    }
 }
 
 void insert_instruction(AssemblyData *ad, char *instruction) {
