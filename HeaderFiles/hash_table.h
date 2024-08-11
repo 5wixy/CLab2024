@@ -53,5 +53,6 @@ char *get(HashTable *ht, const char *key);
 void insert_label(HashTable *ht, const char *key, int address, int type,int label_sort);
 void freeHashTable(HashTable *ht);
 int get_address(HashTable *ht, const char *key);
+void free_macros_from_table(HashTable *ht);
 HashItem *get_label(HashTable *ht, const char *key);
 #endif // CLAB_HASH_TABLE_H

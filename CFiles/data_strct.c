@@ -16,19 +16,40 @@ void init_assembly_line(AssemblyLine *line) {
     line->data_count = 0;
 }
 
-// Free the memory allocated for an AssemblyLine struct
+/* Free the memory allocated for an AssemblyLine struct */
 void free_assembly_line(AssemblyLine *line) {
-    if (line->label) free(line->label);
-    if (line->src_operand) free(line->src_operand);
-    if (line->dest_operand) free(line->dest_operand);
+    int i;
 
-    // Free data_array if it exists
-    if (line->data_array) {
-        free(line->data_array);
+
+    if (line->label) {
+        my_free(line->label, __FILE_NAME__, __LINE__);
     }
+
+
+    if (line->src_operand) {
+        my_free(line->src_operand, __FILE_NAME__, __LINE__);
+    }
+
+
+    if (line->dest_operand) {
+        my_free(line->dest_operand, __FILE_NAME__, __LINE__);
+    }
+
+
+    if (line->data_array) {
+        for (i = 0; i < line->data_count; ++i) {
+            if (line->data_array[i]) {
+                my_free(line->data_array[i], __FILE_NAME__, __LINE__);
+            }
+        }
+        my_free(line->data_array, __FILE_NAME__, __LINE__);
+    }
+
+
+    my_free(line, __FILE_NAME__, __LINE__);
 }
 
-// Helper function to check if a string is a label
+/* Helper function to check if a string is a label */
 int is_label(const char *str) {
     if (!str || !(*str)) return 0;
     if (isdigit(*str)) return 0;
@@ -39,18 +60,18 @@ int is_label(const char *str) {
     return str[strlen(str) - 1] == ':';
 }
 
-// Function to parse an assembly line string into an AssemblyLine struct
+/* Function to parse an assembly line string into an AssemblyLine struct */
 int parse_assembly_line(const char *line_str, AssemblyLine *line) {
     char line_copy[MAX_LINE_LEN];
     strncpy(line_copy, line_str, MAX_LINE_LEN - 1);
-    line_copy[MAX_LINE_LEN - 1] = '\0'; // Ensure null-termination
+    line_copy[MAX_LINE_LEN - 1] = '\0';
 
-    // Tokenize the line
     line->label = extract_label(line_copy);
     line->opcode = extract_opcode(line_copy);
-    line->src_operand = extract_src_operand(line_copy);
+    line->src_operand = extract_src_operand(line_str);
+
     strncpy(line_copy, line_str, MAX_LINE_LEN - 1);
-    line_copy[MAX_LINE_LEN - 1] = '\0'; // Ensure null-termination
+    line_copy[MAX_LINE_LEN - 1] = '\0';
     line->dest_operand = extract_dest_operand(line_copy);
     line->type = determine_line_type(line, line_copy);
 
@@ -65,4 +86,6 @@ int parse_assembly_line(const char *line_str, AssemblyLine *line) {
     if (line->src_operand && line->dest_operand == NULL && line->opcode > -1) {
         swap_src_dest(line);
     }
+
+    return 0;
 }

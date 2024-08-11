@@ -45,7 +45,7 @@ int is_type_data_type_name(char *macro_name) {
 
 }
 /*Checking if macro name equals to one of the operator names */
-//return 0 if match found 1 if not
+/*return 0 if match found 1 if not */
 int is_op_name(char *macro_name) {
 
     int i;
@@ -58,18 +58,18 @@ int is_op_name(char *macro_name) {
 
 }
 int is_label_macro_name_collision(HashTable *ht,char *label_name){
-    unsigned long idx = hash(label_name); // Compute the hash index for the label name
-    HashItem *entry = ht->table[idx]; // Get the head of the chain at the index
+    unsigned long idx = hash(label_name);
+    HashItem *entry = ht->table[idx];
 
-    // Traverse the chain at the index
+
     while (entry != NULL) {
         if (entry->type == TYPE_MACRO && strcmp(entry->name, label_name) == 0) {
-            return 1; // Collision found: the label name matches an existing macro name
+            return 1;
         }
-        entry = entry->next; // Move to the next item in the chain
+        entry = entry->next;
     }
 
-    return 0; // No collision found
+    return 0;
 }
 int is_external_label(const char *label, HashTable *table) {
 
@@ -84,7 +84,7 @@ int is_name_too_long(char *name){
 
 }
 /*Checking if macro name equals to one of the register names */
-//returns 0 if match found 1 if not
+/*returns 0 if match found 1 if not */
 int is_reg_name(char *macro_name){
     int i;
     for (i = 0; i < REG_ARR_SIZE; ++i) {
@@ -126,32 +126,32 @@ int is_entry_or_extern(const char *line, HashTable *symbol_table, int *IC) {
     char label_name[MAX_LINE_LEN];
     int result = 0;
 
-    // Copy the line to avoid modifying the original
+    /* Copy the line to avoid modifying the original */
     char line_copy[MAX_LINE_LEN];
     strcpy(line_copy, line);
 
-    // Extract the first word (directive) from the line
+
     char *token = strtok(line_copy, " \t");
     if (token == NULL) {
-        return result;  // No first word found
+        return result;
     }
     strcpy(first_word, token);
 
-    // Check if the first word is `.entry` or `.extern`
+
     if (strcmp(first_word, ".entry") == 0) {
-        // Get the label name after `.entry`
+
         token = strtok(NULL, " \t");
         if (token != NULL) {
             strcpy(label_name, token);
             process_entry(label_name, symbol_table, IC);
-            result = 1;  // Indicates that the line was an `.entry` directive
+            result = 1;
         }
     } else if (strcmp(first_word, ".extern") == 0) {
-        // Get the label name after `.extern`
+        /* Get the label name after `.extern` */
         token = strtok(NULL, " \t");
         if (token != NULL) {
             process_extern(token, symbol_table);
-            result = 1;  // Indicates that the line was an `.extern` directive
+            result = 1;
         }
     }
 
@@ -160,10 +160,8 @@ int is_entry_or_extern(const char *line, HashTable *symbol_table, int *IC) {
 
 
 int is_extern(const char *line) {
-    // Check if the line starts with ".extern" and is followed by a space or end of line
     return strncmp(line, ".extern", 7) == 0 && (line[7] == ' ' || line[7] == '\0');
 }
 int is_entry(const char *line) {
-    // Check if the line starts with ".entry" and is followed by a space or end of line
     return strncmp(line, ".entry", 6) == 0 && (line[6] == ' ' || line[6] == '\0');
 }

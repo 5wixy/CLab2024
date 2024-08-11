@@ -8,12 +8,20 @@
 #include "data_strct.h"
 #include <stdio.h>
 char *copy_text(FILE *fp, fpos_t *pos, int len);
-void *malloc_helper(long object_size);
+void *malloc_helper(int object_size, char *file, int line);
+void my_free(void* ptr, const char* file, int line);
 void remove_trailing_newline(char *str);
 char *create_new_file_name(char *file_name, char *ending);
 void close_resources(int num_args, ...);
 void copy_file_content(const char *source_file, const char *destination_file, int remove_macros);
+char *trim_whitespace(char *str);
+void trim_whitespaces(char *str);
+void trim_file_in_place(const char *file_name);
+void trim_line(char *line);
+void trim_file(const char *filename);
 void addressing_method_to_binary(int method, char *output);
+void trim_file_to_temp(const char *source_file, char *temp_file);
+void clean_file(const char *input_file, const char *output_file);
 void print_ascii_values(char *str);
 char* remove_newline(char *str);
 void to_binary(short num, char *binary_output);

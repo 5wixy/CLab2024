@@ -17,6 +17,8 @@
 #define REGISTER_DIRECT 3
 #define MEMORY_SIZE 4096
 #define WORD_SIZE 15
+#define INITIAL_EXTERN_OPERANDS_CAPACITY 10
+
 
 typedef enum {
     MOV = 0,

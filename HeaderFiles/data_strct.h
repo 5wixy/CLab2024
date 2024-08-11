@@ -15,7 +15,10 @@ typedef struct {
     char **data_array;
     int data_count;
 } AssemblyLine;
-
+typedef struct {
+    char *label_name;
+    int address;
+} ExternOperand;
 
 
 void init_assembly_line(AssemblyLine *line);

@@ -36,9 +36,7 @@ int open_read_file(char *file_name, HashTable *table) {
 void process_macro(FILE *fp, char *str, int line_count, HashTable *table) {
     fpos_t pos;
     char *macro_content;
-    int success;
     char *macro_name = strtok(str + 5, " \n");
-
 
     if (is_name_too_long(macro_name)) {
         printf("Macro name too long");
@@ -58,11 +56,12 @@ void process_macro(FILE *fp, char *str, int line_count, HashTable *table) {
     fgetpos(fp, &pos);
     macro_content = save_macro_content(fp, &pos, &line_count);
     if (macro_content == NULL) {
-        success = 0;
         return;
     }
 
     insert_macro(table, macro_name, macro_content);
+    my_free(macro_content, __FILE__, __LINE__);
+
     fsetpos(fp, &pos);
 }
 
@@ -87,7 +86,7 @@ char *save_macro_content(FILE *fp, fpos_t *pos, int *line_count) {
     }
 
     macro = copy_text(fp, &start_pos, macro_length);
-    macro = remove_newline(macro);
+    remove_trailing_newline(macro);
     if (macro == NULL) {
         return NULL;
     }
@@ -121,6 +120,7 @@ void remove_macros(FILE *original, FILE *copied) {
 void insert_macros(const char* source_file, const char* destination_file, HashTable *table) {
     FILE* original, * copied;
     char line[MAX_LINE_LEN];
+    int i, j;
 
     original = fopen(source_file, "r");
     if (original == NULL) {
@@ -136,39 +136,86 @@ void insert_macros(const char* source_file, const char* destination_file, HashTa
     }
 
     while (fgets(line, sizeof(line), original)) {
-        char* token = strtok(line, " \n");
+        i = 0;
+        while (line[i] != '\0') {
+            // Skip leading spaces
+            if (line[i] == ' ' || line[i] == '\t') {
+                fputc(line[i], copied);
+                i++;
+                continue;
+            }
 
-        while (token != NULL) {
+            // Extract token
+            j = 0;
+            char token[MAX_LINE_LEN];
+            while (line[i] != '\0' && line[i] != ' ' && line[i] != '\n' && line[i] != '\t') {
+                token[j++] = line[i++];
+            }
+            token[j] = '\0';
+
+            // Check if token is a macro
             char* macro_content = get(table, token);
             if (macro_content != NULL) {
                 fputs(macro_content, copied);
             } else {
                 fputs(token, copied);
-                fputc(' ', copied);
             }
 
-            token = strtok(NULL, " \n");
-        }
-        fputc('\n', copied);
-    }
+            // Write the space or newline character
+            if (line[i] == ' ' || line[i] == '\t' || line[i] == '\n') {
+                fputc(line[i], copied);
+            }
 
+            if (line[i] != '\0') {
+                i++;
+            }
+        }
+    }
 
     fclose(original);
     fclose(copied);
 }
 
-int expand_macro(char file_name[],HashTable *table) {
-
-    char *temp_file, *complete;
+int expand_macro(char file_name[], HashTable *table) {
+    char *temp_file, *complete,*messy_file;
     int remove_macros = 1;
 
     printf("Starting macro expansion for file: %s\n", file_name);
+
     open_read_file(file_name, table);
+
     temp_file = create_new_file_name(file_name, ".tmp");
+    if (temp_file == NULL) {
+        fprintf(stderr, "Error creating temporary file name.\n");
+        return 1;
+    }
+
     copy_file_content(file_name, temp_file, remove_macros);
+    messy_file = create_new_file_name(file_name, ".messy");
+
     complete = create_new_file_name(temp_file, ".am");
-    insert_macros(temp_file, complete, table);
-    free(temp_file);
+    if (complete == NULL) {
+        fprintf(stderr, "Error creating complete file name.\n");
+        my_free(temp_file, __FILE__, __LINE__);
+        return 1;
+    }
+
+    insert_macros(temp_file, messy_file, table);
+    clean_file(messy_file, complete);
+    /* Delete the temporary file */
+    if (remove(temp_file) != 0) {
+        perror("Error deleting temporary file");
+        return 1;
+    }
+    remove(messy_file);
+
+    /* Free memory for file names */
+    my_free(messy_file, __FILE__, __LINE__);
+    my_free(temp_file, __FILE__, __LINE__);
+    my_free(complete, __FILE__, __LINE__);
+
+
+
     printf("Macro expansion complete.\n");
     return 0;
 }

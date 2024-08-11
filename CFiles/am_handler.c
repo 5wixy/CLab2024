@@ -1,6 +1,3 @@
-//
-// Created by gyank on 01/08/2024.
-//
 #include "string.h"
 #include "../HeaderFiles/globals.h"
 #include <ctype.h>
@@ -13,24 +10,6 @@
 #include "../HeaderFiles/hash_table.h"
 #include "../HeaderFiles/first_pass.h"
 
-char* get_first_word(char *str) {
-    char line_copy[MAX_LINE_LEN];
-    strncpy(line_copy, str, sizeof(line_copy) - 1);
-    line_copy[sizeof(line_copy) - 1] = '\0';
-
-    char *token = strtok(line_copy, " \t");
-    if (token != NULL) {
-        char *first_word = (char*)malloc((strlen(token) + 1) * sizeof(char));
-        if (first_word == NULL) {
-            perror("Memory allocation error");
-            exit(EXIT_FAILURE);
-        }
-        strncpy(first_word, token, strlen(token) + 1);
-        return first_word;
-    } else {
-        return NULL;
-    }
-}
 void remove_commas(char *str) {
     char *src = str, *dst = str;
 
@@ -40,48 +19,28 @@ void remove_commas(char *str) {
         }
         src++;
     }
-    *dst = '\0';  // Null-terminate the modified string
+    *dst = '\0';  /* Null-terminate the modified string */
 }
 void skip_first_word(char *line_copy) {
     char *src = line_copy;
     char *dst = line_copy;
 
-    // Move the pointer to the end of the first word
+    /* Move the pointer to the end of the first word */
     while (*src && !isspace((unsigned char)*src)) {
         src++;
     }
 
-    // Skip any additional whitespace characters
+    /* Skip any additional whitespace characters */
     while (*src && isspace((unsigned char)*src)) {
         src++;
     }
 
-    // Shift the remaining part of the string to the start of the array
+    /* Shift the remaining part of the string to the start of the array */
     while (*src) {
         *dst++ = *src++;
     }
 
-    *dst = '\0';  // Null-terminate the resulting string
-}
-int count_numbers(const char *line) {
-    int count = 0;
-    int i = 0;
-    int length = strlen(line);
-
-    int number_started = 0;
-    while (i < length) {
-        if (isdigit(line[i]) || (line[i] == '-' && isdigit(line[i + 1]))) {
-            if (number_started == 0) {
-                count++;
-                number_started = 1;
-            }
-        } else if (line[i] == ',') {
-            number_started = 0;
-        }
-        i++;
-    }
-
-    return count;
+    *dst = '\0';  /* Null-terminate the resulting string */
 }
 int is_valid_input(const char *line) {
     int i = 0;
@@ -89,40 +48,40 @@ int is_valid_input(const char *line) {
     int has_number = 0;
     int has_valid_data = 0;
 
-    // Skip leading whitespace
+    /* Skip leading whitespace */
     while (isspace(line[i])) {
         i++;
     }
 
-    // Check for the .data directive and skip it
+    /* Check for the .data directive and skip it */
     if (strncmp(&line[i], ".data", 5) == 0) {
         i += 5;
-        // Skip any whitespace after .data
+        /* Skip any whitespace after .data */
         while (isspace(line[i])) {
             i++;
         }
     }
 
-    // Now check for numbers or commas
+    /* Now check for numbers or commas */
     int comma_expected = 0;
     while (i < length) {
         if (line[i] == ',') {
             if (!has_number || comma_expected == 0) {
-                return 0; // Invalid input: consecutive commas or no number before comma
+                return 0; /* Invalid input: consecutive commas or no number before comma */
             }
             comma_expected = 0;
-            has_number = 0; // Reset has_number flag
+            has_number = 0; /* Reset has_number flag */
         } else if (isdigit(line[i]) || (line[i] == '-' && isdigit(line[i + 1]))) {
             comma_expected = 1;
-            has_number = 1; // Valid number found
-            has_valid_data = 1; // At least one valid number found
+            has_number = 1;
+            has_valid_data = 1; /* At least one valid number found */
         } else if (!isspace(line[i])) {
-            return 0; // Invalid input: unexpected character
+            return 0; /* Invalid input: unexpected character */
         }
         i++;
     }
 
-    // Check if there was at least one valid number
+    /* Check if there was at least one valid number */
     return has_valid_data && comma_expected;
 }
 int match_opcodes(char *str){
@@ -157,10 +116,10 @@ int find_register_index( char *reg_name) {
     int i;
     for (i = 0; i < REG_ARR_SIZE; ++i) {
         if (strcmp(reg_name, reg_arr[i]) == 0) {
-            return i; // Return the index if the register name matches
+            return i; /* Return the index if the register name matches */
         }
     }
-    return -1; // Return -1 if the register name is not found
+    return -1; /* Return -1 if the register name is not found */
 }
 
 int is_valid_command(command_parts *command){
@@ -170,8 +129,8 @@ int is_valid_command(command_parts *command){
         case MOV:
         case ADD:
         case SUB:
-            // Both source and destination are allowed
-            // Immediate addressing not allowed for destination
+            /* Both source and destination are allowed
+             Immediate addressing not allowed for destination */
             if (command->dest && detect_addressing_method(command->dest) == 0) {
                 printf("ERROR: Cannot use immediate address for destination in MOV/ADD/SUB.\n");
                 return 0;
@@ -179,11 +138,11 @@ int is_valid_command(command_parts *command){
             break;
 
         case CMP:
-            // Both source and destination are allowed
+            /* Both source and destination are allowed */
             break;
 
         case LEA:
-            // Source must be direct or memory-indirect, destination can be any valid method
+            /* Source must be direct or memory-indirect, destination can be any valid method */
             if (command->source && detect_addressing_method(command->source) > 1) {
                 printf("ERROR: LEA source must be direct or memory-indirect.\n");
                 return 0;
@@ -195,7 +154,7 @@ int is_valid_command(command_parts *command){
         case INC:
         case DEC:
         case RED:
-            // No source operand, destination can be any valid method
+            /* No source operand, destination can be any valid method */
             if (command->source != NULL) {
                 printf("ERROR: CLR/NOT/INC/DEC/RED cannot have a source operand.\n");
                 return 0;
@@ -205,7 +164,7 @@ int is_valid_command(command_parts *command){
         case JMP:
         case BNE:
         case JSR:
-            // No source operand, destination must be direct or memory-indirect
+            /* No source operand, destination must be direct or memory-indirect */
             if (command->source != NULL) {
                 printf("ERROR: JMP/BNE/JSR cannot have a source operand.\n");
                 return 0;
@@ -217,7 +176,7 @@ int is_valid_command(command_parts *command){
             break;
 
         case PRN:
-            // No source operand, destination can be any valid method
+            /* No source operand, destination can be any valid method */
             if (command->source != NULL) {
                 printf("ERROR: PRN cannot have a source operand.\n");
                 return 0;
@@ -226,7 +185,7 @@ int is_valid_command(command_parts *command){
 
         case RTS:
         case STOP:
-            // No source or destination operands
+            /* No source or destination operands */
             if (command->source != NULL || command->dest != NULL) {
                 printf("ERROR: RTS/STOP cannot have operands.\n");
                 return 0;
@@ -242,10 +201,10 @@ int is_valid_command(command_parts *command){
 }
 void increment_IC(AssemblyLine line, int *IC) {
 
-    // Calculate the increment amount
+    /* Calculate the increment amount */
     int increment = calculate_increment(line.src_operand, line.dest_operand);
 
-    // Apply the increment to IC
+    /* Apply the increment to IC */
     apply_increment(IC, increment);
 }
 
@@ -253,16 +212,16 @@ int calculate_increment(const char *source, const char *dest) {
     int src_method = (source != NULL) ? detect_addressing_method(source) : -1;
     int dest_method = (dest != NULL) ? detect_addressing_method(dest) : -1;
 
-    // Determine the increment amount based on the addressing methods
+    /* Determine the increment amount based on the addressing methods */
     if ((src_method == REGISTER_POINTER || src_method == REGISTER_DIRECT) &&
         (dest_method == REGISTER_POINTER || dest_method == REGISTER_DIRECT)) {
-        return 2;  // Both operands are using register addressing methods
+        return 2;  /* Both operands are using register addressing methods */
     } else if (src_method == -1 && dest_method == -1) {
-        return 1;  // No operands
+        return 1;  /* No operands */
     } else if (src_method == -1) {
-        return 2;  // No source operand, only destination operand
+        return 2;  /* No source operand, only destination operand */
     } else {
-        return 3;  // At least one operand is not using a register addressing method
+        return 3;  /* At least one operand is not using a register addressing method */
     }
 }
 
@@ -273,11 +232,9 @@ void process_operand(const char *operand, int addressing_method, char *output, i
     switch (addressing_method) {
         case IMMEDIATE:
             process_immediate_operand(operand, output);
-            //(*num_words)++;
             break;
         case DIRECT:
             process_direct_operand(operand, output,table);
-            //(*num_words)++;
             break;
         case REGISTER_POINTER:
         case REGISTER_DIRECT:
@@ -290,20 +247,20 @@ void process_operand(const char *operand, int addressing_method, char *output, i
 void process_register_operand(const char *operand, char *output, int position) {
     int reg_value = get_register_value(operand);
 
-    // Initialize the output string to all zeros
+    /* Initialize the output string to all zeros */
     memset(output, '0', 15);
 
-    // Convert the register value to a binary string and place it in the correct position
-    char binary[4];  // 3 bits for the register and 1 for null-termination
+    /* Convert the register value to a binary string and place it in the correct position */
+    char binary[4];  /* 3 bits for the register and 1 for null-termination*/
     to_binary_string(reg_value, 3, binary);
 
-    // Copy the binary string into the output at the specified position
+    /* Copy the binary string into the output at the specified position*/
     strncpy(output + position, binary, 3);
 
-    // Set the ARE field to 100 in one line
+    /* Set the ARE field to 100 in one line*/
     strncpy(output + 12, "100", 3);
 
-    // Null-terminate the output string if necessary
+    /* Null-terminate the output string if necessary*/
     output[15] = '\0';
 }
 void process_direct_operand(const char *operand, char *output,HashTable *table) {
@@ -317,7 +274,7 @@ void process_direct_operand(const char *operand, char *output,HashTable *table) 
     output[15] = '\0';
 }
 void process_immediate_operand(const char *operand, char *output) {
-    int value = atoi(operand + 1); // Skip '#'
+    int value = atoi(operand + 1); /*Skip '#' */
     to_binary_string(value, 12, output);
     strncpy(output + 12, "100", 3);
     output[15] = '\0';
@@ -328,65 +285,57 @@ void create_first_word(int opcode, int src_method, int dest_method, char *output
     char dest_method_bin[5];
     char are_field[] = "100";
 
-    // Convert opcode to 4-bit binary
+    /* Convert opcode to 4-bit binary */
     to_binary_string(opcode, 4, opcode_bin);
 
-    // Convert addressing methods to 4-bit binary
+    /* Convert addressing methods to 4-bit binary*/
     addressing_method_to_binary(src_method, src_method_bin);
     addressing_method_to_binary(dest_method, dest_method_bin);
 
-    // Create the first word binary string
+    /* Create the first word binary string */
     strncpy(output, opcode_bin, 4);
     strncpy(output + 4, src_method_bin, 4);
     strncpy(output + 8, dest_method_bin, 4);
     strncpy(output + 12, are_field, 3);
     output[15] = '\0';
 }
-void swap_src_dest(AssemblyLine *line){
+void swap_src_dest(AssemblyLine *line) {
     if (line->dest_operand == NULL && line->src_operand != NULL && strlen(line->src_operand) > 0) {
-        // Allocate memory for dest_operand
-        line->dest_operand = malloc_helper(strlen(line->src_operand) + 1);
-        if (line->dest_operand == NULL) {
-            // Handle memory allocation failure
-            return; // or handle the error appropriately
-        }
-
-        // Copy src_operand to dest_operand
-        strcpy(line->dest_operand, line->src_operand);
-
-        // Clear src_operand
-        line->src_operand = NULL; // Set src_operand to empty string
+        /* Swap the pointers */
+        char *temp = line->src_operand;
+        line->src_operand = line->dest_operand;
+        line->dest_operand = temp;
     }
 }
 void transform_to_binary(AssemblyLine *line, char binary_output[][WORD_SIZE], int *num_words, HashTable *table) {
 
     int  src_method, dest_method;
 
-    // Get opcode and addressing methods
+    /* Get opcode and addressing methods*/
 
     src_method = detect_addressing_method(line->src_operand);
     dest_method = detect_addressing_method(line->dest_operand);
 
-    // Create the first binary word after setting the correct operands
+    /* Create the first binary word after setting the correct operands*/
     create_first_word(line->opcode, src_method, dest_method, binary_output[0]);
     *num_words = 1;
 
-    // Process both source and destination operands if they are registers
+    /* Process both source and destination operands if they are registers */
     if (src_method == REGISTER_DIRECT || src_method == REGISTER_POINTER) {
         if (dest_method == REGISTER_DIRECT || dest_method == REGISTER_POINTER) {
             process_register_operands(line->src_operand, line->dest_operand, binary_output[*num_words]);
             (*num_words)++;
-            return; // Done processing both operands
+            return;
         }
     }
 
-    // Process source operand if it exists and is not empty
+    /* Process source operand if it exists and is not empty */
     if (line->src_operand != NULL) {
         process_operand(line->src_operand, src_method, binary_output[*num_words], num_words, 6, table);
         (*num_words)++;
     }
 
-    // Process destination operand if it exists and is not empty
+    /* Process destination operand if it exists and is not empty */
     if (line->dest_operand != NULL) {
         process_operand(line->dest_operand, dest_method, binary_output[*num_words], num_words, 9, table);
         (*num_words)++;
@@ -417,61 +366,56 @@ void process_register_operands(const char *src_operand, const char *dest_operand
     int src_reg_value = get_register_value(src_operand);
     int dest_reg_value = get_register_value(dest_operand);
 
-    // Initialize the output string to all zeros
+    /* Initialize the output string to all zeros*/
     memset(output, '0', 15);
 
-    // Convert the source register value to binary and place it in bits 6-8
-    char src_binary[4]; // 3 bits for the register value and 1 for null-termination
+    /* Convert the source register value to binary and place it in bits 6-8 */
+    char src_binary[4]; /* 3 bits for the register value and 1 for null-termination */
     to_binary_string(src_reg_value, 3, src_binary);
     strncpy(output + 6, src_binary, 3);
 
-    // Convert the destination register value to binary and place it in bits 9-11
+    /* Convert the destination register value to binary and place it in bits 9-11 */
     char dest_binary[4];
     to_binary_string(dest_reg_value, 3, dest_binary);
     strncpy(output + 9, dest_binary, 3);
 
-    // Set the ARE field to 100 in bits 13-15
+    /* Set the ARE field to 100 in bits 13-15 */
     strncpy(output + 12, "100", 3);
 
-    // Null-terminate the output string if necessary
+    /* Null-terminate the output string if necessary */
     output[15] = '\0';
 }
 
 void process_string_directive(AssemblyLine *line, HashTable *table, int *DC, AssemblyData *ad) {
-    int i,j;
-    char binary_output[WORD_SIZE];
+    int i;
+    char binary_output[WORD_SIZE + 1];
 
-    insert_label(table, line->label, *DC,  0,DAT);
+    // Insert the label if it exists
+    if (line->label) {
+        insert_label(table, line->label, *DC, 0, DAT);
+    }
+
+    // Process each character in the string and add data
     for (i = 0; i < line->data_count; ++i) {
         ascii_to_15_bit_binary(line->data_array[i][0], binary_output, WORD_SIZE);
-
-        // Allocate memory for the current data word
-        ad->data[*DC] = malloc_helper(WORD_SIZE);
-        if (ad->data[*DC] == NULL) {
-            // Handle memory allocation failure
-            // Free previously allocated memory and return an error code
-            for (j = 0; j < *DC; ++j) {
-                free(ad->data[j]);
-            }
-            return;
-        }
-
-        // Copy the binary output into the allocated memory
-        strcpy(ad->data[*DC], binary_output);
-        ad->data_count++;
+        add_data(ad, binary_output, WORD_SIZE);
         (*DC)++;
     }
-    ad->data[*DC] = "000000000000000";
-    ad->data_count++;
+
+    // Allocate and add the terminating 15-bit binary representation of NULL
+    add_data(ad, "000000000000000", WORD_SIZE);
     (*DC)++;
 }
 void process_data_directive(AssemblyLine *line, HashTable *table, int *DC, AssemblyData *ad) {
     int i;
-    char binary_output[WORD_SIZE];
+    char binary_output[WORD_SIZE + 1]; // Ensure there's space for null terminator
 
+    // Insert the label if it exists
     if (line->label) {
-        insert_label(table, line->label, *DC, 0,DAT);
+        insert_label(table, line->label, *DC, 0, DAT);
     }
+
+    // Process each piece of data in the data_array
     for (i = 0; i < line->data_count; ++i) {
         // Convert string to short integer
         short num = (short)atoi(line->data_array[i]);
@@ -479,20 +423,17 @@ void process_data_directive(AssemblyLine *line, HashTable *table, int *DC, Assem
         // Convert short integer to binary
         to_binary(num, binary_output);
 
-        // Store binary data (assuming ad->data is a char array and you're storing binary strings)
-        ad->data[*DC] = strdup(binary_output); // Use strdup to allocate memory and copy the binary string
-        if (!ad->data[*DC]) {
-            // Handle memory allocation failure
-            fprintf(stderr, "Memory allocation failed\n");
-            return;
-        }
+        // Add binary data to the AssemblyData
+        // Note: We pass binary_output and the size of binary_output to add_data
+        add_data(ad, binary_output, WORD_SIZE);
+
+        // Increment the data count and DC (Data Counter)
         (*DC)++;
-        ad->data_count++;
     }
 }
 void process_operation_line(AssemblyLine *line, HashTable *table, int *IC, AssemblyData *ad) {
     if (line->opcode > -1) {
-        // It's an operation
+        /* It's an operation */
         process_labeled_operation(line, table, IC, ad);
     } else {
         printf("ERROR: Invalid opcode for operation.\n");
