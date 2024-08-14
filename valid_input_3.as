@@ -1,78 +1,25 @@
-.extern XYZ
-    .entry MAIN
-
-KINITIALVALUE: sub *r4   ,    *r3
-
-MAIN:   mov *r3, LENGTH
-
-LOOP:   jmp L1
-
-macr M1
-sub *r1, *r4
+.entry LIST
+    .extern fn1
+MAIN: add r3, LIST
+jsr fn1
+LOOP: prn #48
+lea STR, r6
+inc r6
+mov *r6, L3
+sub r1, r4
+cmp r3, #-6
 bne END
-endmacr
-
-;comment
-
-prn #-5
-bne LOOP
-
-M1
-
-L1:     inc K
-bne LOOP
-
-END:    stop
-
-STR:    .string "abcdef"
-
-LENGTH: .data 6, -9, 15
-
-K:      .data 4    ,    -55,4,4,4,6
-
-macr M2
-mov reg1, val
-add reg2, reg1
-endmacr
-
-M2
-ABC: mov XYZ, *r3
-reg1: .data 6,5,-555,66
-reg2: .data 6,5,-555,66
-val: .string "asfas   %%dfjk"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+add r7, *r6
+clr K
+sub L31, L3
+    .entry MAIN
+jmp LOOP
+END: stop
+STR: .string "abcd"
+LIST: .data 6, -9
+    .data -100
+K: .data 31
+    .extern L3
 
 
 

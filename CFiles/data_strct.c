@@ -51,13 +51,19 @@ void free_assembly_line(AssemblyLine *line) {
 
 /* Helper function to check if a string is a label */
 int is_label(const char *str) {
-    if (!str || !(*str)) return 0;
-    if (isdigit(*str)) return 0;
     int i;
-    for (i = 0; str[i]; i++) {
-        if (!isalnum(str[i]) && str[i] != '_') return 0;
+    if (!str || !(*str)) return 0; // Check for NULL or empty string
+    size_t len = strlen(str);
+    if (len < 2 || str[len - 1] != ':') return 0; // Must end with ':' and be at least 2 characters long
+
+    // Iterate over the string excluding the last character (which is ':')
+    for (i = 0; i < len - 1; i++) {
+        if (!isalnum(str[i]) && str[i] != '_') {
+            return 0;
+        }
     }
-    return str[strlen(str) - 1] == ':';
+
+    return 1;
 }
 
 /* Function to parse an assembly line string into an AssemblyLine struct */
@@ -67,6 +73,7 @@ int parse_assembly_line(const char *line_str, AssemblyLine *line) {
     line_copy[MAX_LINE_LEN - 1] = '\0';
 
     line->label = extract_label(line_copy);
+
     line->opcode = extract_opcode(line_copy);
     line->src_operand = extract_src_operand(line_str);
 

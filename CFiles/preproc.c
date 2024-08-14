@@ -7,12 +7,13 @@
 #include "../HeaderFiles/hash_table.h"
 #include "../HeaderFiles/validation.h"
 #include "../HeaderFiles/macro.h"
+#include "../HeaderFiles/Errors.h"
 
 
 int open_read_file(char *file_name, HashTable *table) {
     FILE *fp;
     char str[MAX_LINE_LEN];
-    int line_count = 0;
+    int line_count = 1;
 
 
 
@@ -24,7 +25,8 @@ int open_read_file(char *file_name, HashTable *table) {
 
     while (fgets(str, sizeof(str), fp)) {
         line_count++;
-        if (strncmp(str, "macr", 4) == 0) {
+        char *pos = strstr(str, "macr");
+        if (pos != NULL && (pos[4] == ' ' || pos[4] == '\t' || pos[4] == '\n' || pos[4] == '\0')) {
             process_macro(fp, str, line_count, table);
         }
     }
@@ -39,17 +41,17 @@ void process_macro(FILE *fp, char *str, int line_count, HashTable *table) {
     char *macro_name = strtok(str + 5, " \n");
 
     if (is_name_too_long(macro_name)) {
-        printf("Macro name too long");
+        print_error(ERR_MACRO_NAME_TOO_LONG,line_count);
         return;
     }
 
     if (is_valid_macro_name(macro_name) == 0) {
-        printf("\nMacro name is illegal");
+        print_error(ERR_ILLEGAL_MACRO_NAME,line_count);
         return;
     }
 
     if (has_extra(macro_name) == 1) {
-        printf("\nEXTRA TEXT IN MACRO DECLARATION");
+        print_error(ERR_EXTRA_TEXT_IN_MACRO_DECLARATION,line_count);
         return;
     }
 
@@ -98,7 +100,8 @@ void remove_macros(FILE *original, FILE *copied) {
     int inside_macro = 0;
 
     while (fgets(line, sizeof(line), original)) {
-        if (strncmp(line, "macr", 4) == 0) {
+        // Check if the line starts with "macr"
+        if (strncmp(line, "macr", 4) == 0 && (line[4] == ' ' || line[4] == '\t' || line[4] == '\n' || line[4] == '\0')) {
             inside_macro = 1;
             continue;
         }

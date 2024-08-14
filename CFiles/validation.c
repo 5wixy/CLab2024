@@ -7,6 +7,8 @@
 #include "../HeaderFiles/helper.h"
 #include "../HeaderFiles/am_handler.h"
 #include "../HeaderFiles/first_pass.h"
+#include "../HeaderFiles/Errors.h"
+
 op_code op_arr[] = {{"mov",2},{"cmp",2}, {"add",2} ,{"sub",2} ,
                     {"lea",2},{"clr",1}, {"not",1}, {"inc",1},
                     {"dec",1}, {"jmp",1}, {"bne",1} ,{"red",1},
@@ -89,7 +91,6 @@ int is_reg_name(char *macro_name){
     int i;
     for (i = 0; i < REG_ARR_SIZE; ++i) {
         if (strcmp(macro_name, reg_arr[i]) == 0) {
-            printf("Match found at index %d\n", i);
             return 0;
         }
     }
@@ -157,6 +158,83 @@ int is_entry_or_extern(const char *line, HashTable *symbol_table, int *IC) {
 
     return result;
 }
+int is_valid_command(AssemblyLine asm_line, int line_num) {
+
+
+    switch (asm_line.opcode) {
+        case MOV:
+        case ADD:
+        case SUB:
+            /* Both source and destination are allowed
+             Immediate addressing not allowed for destination */
+            if (asm_line.dest_operand && detect_addressing_method(asm_line.dest_operand) == 0) {
+                printf("line %d: ERROR: Cannot use immediate address for destination for MOV/ADD/SUB. \n", line_num);
+                return 0;
+            }
+            break;
+
+        case CMP:
+            /* Both source and destination are allowed */
+            break;
+
+        case LEA:
+            /* Source must be direct or memory-indirect, destination can be any valid method */
+            if (asm_line.src_operand && detect_addressing_method(asm_line.src_operand) > 1) {
+                printf("line %d: ERROR: LEA source must be direct or memory-indirect at line. \n",line_num);
+                return 0;
+            }
+            break;
+        case CLR:
+        case NOT:
+        case INC:
+        case DEC:
+        case RED:
+            /* No source operand, destination can be any valid method */
+            if (asm_line.src_operand != NULL) {
+                printf("line %d: ERROR: CLR/NOT/INC/DEC/RED cannot have a source operand.\n",line_num);
+                return 0;
+            }
+            break;
+
+        case JMP:
+        case BNE:
+        case JSR:
+            /* No source operand, destination must be direct or memory-indirect */
+            if (asm_line.src_operand != NULL) {
+                printf("line %d: ERROR: JMP/BNE/JSR cannot have a source operand.\n",line_num);
+                return 0;
+            }
+            if (asm_line.dest_operand && detect_addressing_method(asm_line.dest_operand) < 1 && detect_addressing_method(asm_line.dest_operand) > 2) {
+                printf("line %d: ERROR: JMP/BNE/JSR destination must be direct or memory-indirect.\n",line_num);
+                return 0;
+            }
+            break;
+
+        case PRN:
+            /* No source operand, destination can be any valid method */
+            if (asm_line.src_operand != NULL) {
+                printf("line %d: ERROR: PRN cannot have a source operand.\n",line_num);
+                return 0;
+            }
+            break;
+
+        case RTS:
+        case STOP:
+            /* No source or destination operands */
+            if (asm_line.src_operand != NULL || asm_line.dest_operand != NULL) {
+                printf("line %d: ERROR: RTS/STOP cannot have operands.\n",line_num);
+                return 0;
+            }
+            break;
+
+        default:
+            printf("line %d: ERROR: Unknown opcode.\n",line_num);
+            return 0;
+    }
+
+    return 1;
+}
+
 
 
 int is_extern(const char *line) {

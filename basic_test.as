@@ -1,5 +1,5 @@
 .entry LIST
-.extern fn1
+    .extern fn1
 MAIN: add r3, LIST
 jsr fn1
 LOOP: prn #48
@@ -20,3 +20,8 @@ LIST: .data 6, -9
     .data -100
 K: .data 31
     .extern L3
+
+
+
+
+

@@ -1,0 +1,49 @@
+#ifndef CLAB_ERRORS_H
+#define CLAB_ERRORS_H
+typedef enum {
+    /* Macro Errors */
+    ERR_MACRO_NAME_TOO_LONG,
+    ERR_ILLEGAL_MACRO_NAME,
+    ERR_EXTRA_TEXT_IN_MACRO_DECLARATION,
+    ERR_MACRO_MULTIPLE_DEFINITIONS,
+    ERR_MACRO_NOT_FOUND,
+    ERR_MACRO_WITHOUT_DEFINITION,
+    ERR_ENDMACR_WITH_EXTRA_TEXT,
+
+
+
+
+    ERR_INVALID_OPCODE,
+    ERR_INVALID_SYNTAX,
+    ERR_UNDEFINED_LABEL,
+    ERR_MEMORY_ALLOCATION_FAILED,
+    ERR_FILE_NOT_FOUND,
+    ERR_DIRECTIVE_ERROR,
+    ERR_LABEL_REDEFINITION,
+    ERR_ILLEGAL_LABEL_NAME,
+    ERR_MULTIPLE_COMMAS_DATA,
+    ERR_MISSING_OPERANDS,
+    ERR_EXTRA_OPERANDS,
+    ERR_INVALID_OPERAND_IMMEDIATE,
+    ERR_INVALID_OPERAND_POINTER,
+    ERR_IMMEDIATE_OPERAND_OUT_OF_RANGE,
+
+
+
+
+    ERR_OUT_OF_MEMORY,
+    ERR_MEMORY_OVERFLOW,
+    // Add more error codes as needed
+    ERR_UNKNOWN,
+    ERR_COUNT  // Automatically keeps track of the number of error codes
+} ErrorCode;
+
+typedef struct Error{
+    ErrorCode code;
+    char* message;
+} Error;
+
+void print_error(ErrorCode code,int line);
+
+
+#endif

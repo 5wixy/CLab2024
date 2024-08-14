@@ -27,4 +27,8 @@ add_executable(CLab "CFiles/main.c"
         HeaderFiles/second_pass.h
         CFiles/data_strct.c
         HeaderFiles/data_strct.h
+        CFiles/Errors.c
+        HeaderFiles/Errors.h
+        CFiles/error_checker.c
+        HeaderFiles/error_checker.h
 )

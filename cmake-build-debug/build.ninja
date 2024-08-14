@@ -121,6 +121,18 @@ build CMakeFiles/CLab.dir/CFiles/data_strct.c.obj: C_COMPILER__CLab_unscanned_De
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
+build CMakeFiles/CLab.dir/CFiles/Errors.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/Errors.c || cmake_object_order_depends_target_CLab
+  DEP_FILE = CMakeFiles\CLab.dir\CFiles\Errors.c.obj.d
+  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\CLab.dir
+  OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
+
+build CMakeFiles/CLab.dir/CFiles/error_checker.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/error_checker.c || cmake_object_order_depends_target_CLab
+  DEP_FILE = CMakeFiles\CLab.dir\CFiles\error_checker.c.obj.d
+  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\CLab.dir
+  OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target CLab
@@ -129,7 +141,7 @@ build CMakeFiles/CLab.dir/CFiles/data_strct.c.obj: C_COMPILER__CLab_unscanned_De
 #############################################
 # Link the executable CLab.exe
 
-build CLab.exe: C_EXECUTABLE_LINKER__CLab_Debug CMakeFiles/CLab.dir/CFiles/main.c.obj CMakeFiles/CLab.dir/CFiles/preproc.c.obj CMakeFiles/CLab.dir/CFiles/helper.c.obj CMakeFiles/CLab.dir/CFiles/macro.c.obj CMakeFiles/CLab.dir/CFiles/hash_table.c.obj CMakeFiles/CLab.dir/CFiles/validation.c.obj CMakeFiles/CLab.dir/CFiles/first_pass.c.obj CMakeFiles/CLab.dir/CFiles/am_handler.c.obj CMakeFiles/CLab.dir/CFiles/code_binary.c.obj CMakeFiles/CLab.dir/CFiles/asm_data.c.obj CMakeFiles/CLab.dir/CFiles/second_pass.c.obj CMakeFiles/CLab.dir/CFiles/data_strct.c.obj
+build CLab.exe: C_EXECUTABLE_LINKER__CLab_Debug CMakeFiles/CLab.dir/CFiles/main.c.obj CMakeFiles/CLab.dir/CFiles/preproc.c.obj CMakeFiles/CLab.dir/CFiles/helper.c.obj CMakeFiles/CLab.dir/CFiles/macro.c.obj CMakeFiles/CLab.dir/CFiles/hash_table.c.obj CMakeFiles/CLab.dir/CFiles/validation.c.obj CMakeFiles/CLab.dir/CFiles/first_pass.c.obj CMakeFiles/CLab.dir/CFiles/am_handler.c.obj CMakeFiles/CLab.dir/CFiles/code_binary.c.obj CMakeFiles/CLab.dir/CFiles/asm_data.c.obj CMakeFiles/CLab.dir/CFiles/second_pass.c.obj CMakeFiles/CLab.dir/CFiles/data_strct.c.obj CMakeFiles/CLab.dir/CFiles/Errors.c.obj CMakeFiles/CLab.dir/CFiles/error_checker.c.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\CLab.dir

@@ -9,6 +9,7 @@
 #include "../HeaderFiles/data_strct.h"
 #include "../HeaderFiles/hash_table.h"
 #include "../HeaderFiles/first_pass.h"
+#include "../HeaderFiles/code_binary.h"
 
 void remove_commas(char *str) {
     char *src = str, *dst = str;
@@ -99,19 +100,7 @@ int match_opcodes(char *str){
     return -1; /* Return -1 if the string does not match any known opcodes */
 }
 
-int is_legal_args(command_parts *command){
 
-
-
-}
-int is_reg_or_label(char *str) {
-    /* Check if the string is a valid register using what_reg()
-     * OR if it's a legal label using legal_label() */
-    if ((find_register_index(str) >= 0) || is_legal_label(str)) {
-        return 1;
-    }
-    return 0; /* Neither a valid register nor a legal label */
-}
 int find_register_index( char *reg_name) {
     int i;
     for (i = 0; i < REG_ARR_SIZE; ++i) {
@@ -122,83 +111,7 @@ int find_register_index( char *reg_name) {
     return -1; /* Return -1 if the register name is not found */
 }
 
-int is_valid_command(command_parts *command){
 
-
-    switch (command->opcode) {
-        case MOV:
-        case ADD:
-        case SUB:
-            /* Both source and destination are allowed
-             Immediate addressing not allowed for destination */
-            if (command->dest && detect_addressing_method(command->dest) == 0) {
-                printf("ERROR: Cannot use immediate address for destination in MOV/ADD/SUB.\n");
-                return 0;
-            }
-            break;
-
-        case CMP:
-            /* Both source and destination are allowed */
-            break;
-
-        case LEA:
-            /* Source must be direct or memory-indirect, destination can be any valid method */
-            if (command->source && detect_addressing_method(command->source) > 1) {
-                printf("ERROR: LEA source must be direct or memory-indirect.\n");
-                return 0;
-            }
-            break;
-
-        case CLR:
-        case NOT:
-        case INC:
-        case DEC:
-        case RED:
-            /* No source operand, destination can be any valid method */
-            if (command->source != NULL) {
-                printf("ERROR: CLR/NOT/INC/DEC/RED cannot have a source operand.\n");
-                return 0;
-            }
-            break;
-
-        case JMP:
-        case BNE:
-        case JSR:
-            /* No source operand, destination must be direct or memory-indirect */
-            if (command->source != NULL) {
-                printf("ERROR: JMP/BNE/JSR cannot have a source operand.\n");
-                return 0;
-            }
-            if (command->dest && detect_addressing_method(command->dest) < 1 && detect_addressing_method(command->dest) > 2) {
-                printf("ERROR: JMP/BNE/JSR destination must be direct or memory-indirect.\n");
-                return 0;
-            }
-            break;
-
-        case PRN:
-            /* No source operand, destination can be any valid method */
-            if (command->source != NULL) {
-                printf("ERROR: PRN cannot have a source operand.\n");
-                return 0;
-            }
-            break;
-
-        case RTS:
-        case STOP:
-            /* No source or destination operands */
-            if (command->source != NULL || command->dest != NULL) {
-                printf("ERROR: RTS/STOP cannot have operands.\n");
-                return 0;
-            }
-            break;
-
-        default:
-            printf("ERROR: Unknown opcode.\n");
-            return 0;
-    }
-
-    return 1;
-}
 void increment_IC(AssemblyLine line, int *IC) {
 
     /* Calculate the increment amount */

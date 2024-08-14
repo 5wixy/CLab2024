@@ -10,6 +10,7 @@
 #include "../HeaderFiles/helper.h"
 #include "../HeaderFiles/globals.h"
 #include "../HeaderFiles/data_strct.h"
+#include "../HeaderFiles/Errors.h"
 
 Register register_table[] = {
         {"r0", R0_VALUE},
@@ -22,8 +23,6 @@ Register register_table[] = {
         {"r7", R7_VALUE},
 
 };
-void *allocations[100];
-int alloc_count = 0;
 char *copy_text(FILE *fp, fpos_t *pos, int str_len) {
     char *str;
     if (fsetpos(fp, pos) != 0) {
@@ -50,12 +49,12 @@ void *malloc_helper(int object_size, char *file, int line) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(1); /* Exit the program on memory allocation failure */
     }
-    printf("Allocated %d bytes at %p (%s:%d)\n", object_size, obj_ptr, file, line);
+   // printf("Allocated %d bytes at %p (%s:%d)\n", object_size, obj_ptr, file, line);
 
     return obj_ptr;
 }
 void my_free(void* ptr, const char* file, int line) {
-    printf("Freeing memory at %p (%s:%d)\n", ptr, file, line);
+    //printf("Freeing memory at %p (%s:%d)\n", ptr, file, line);
     free(ptr);
     ptr = NULL;
 }
@@ -130,33 +129,7 @@ void remove_trailing_newline(char *str) {
         str[len - 1] = '\0';  /* Replace newline with null terminator */
     }
 }
-void ascii_to_15_bit_binary(char ch, char *binary_str, int max_len) {
-    int i;
 
-    /* Ensure the buffer is zeroed out */
-    memset(binary_str, '0', max_len);
-    binary_str[WORD_SIZE] = '\0';  /* Null-terminate the string */
-
-    unsigned char byte = (unsigned char)ch;
-    for (i = 7; i >= 0; i--) {
-        binary_str[14 - i] = (byte & (1 << i)) ? '1' : '0';
-    }
-}
-
-void to_binary(short num, char *binary_output) {
-    int i;
-    for (i = 0; i < WORD_SIZE; ++i) {
-        binary_output[i] = (num & (1 << (WORD_SIZE-1 - i))) ? '1' : '0';
-    }
-    binary_output[WORD_SIZE] = '\0'; /* Null-terminate the binary string */
-}
-void to_binary_address(short num, char *binary_output) {
-    int i;
-    for (i = 0; i < 12; ++i) {
-        binary_output[i] = (num & (1 << (12-1 - i))) ? '1' : '0';
-    }
-    binary_output[12] = '\0'; /* Null-terminate the binary string */
-}
 void update_first_12_bits(char *current_binary, const char *new_12_bits) {
     if (current_binary == NULL || new_12_bits == NULL) {
         fprintf(stderr, "Error: NULL pointer passed to update_first_12_bits\n");
@@ -413,7 +386,7 @@ void copy_file_content(const char *source_file, const char *destination_file, in
 void clean_file(const char *input_file, const char *output_file) {
     FILE *in_fp, *out_fp;
     char line[MAX_LINE_LEN];
-    int previous_char = '\0';
+    int previous_char = '\n'; // Initialize as newline to handle leading spaces
     int inside_string = 0; // Flag to track if we are inside a string
 
     in_fp = fopen(input_file, "r");
@@ -436,14 +409,18 @@ void clean_file(const char *input_file, const char *output_file) {
         }
 
         int i = 0;
+        int has_written_char = 0; // Flag to check if we wrote a non-space character
+
         while (line[i] != '\0') {
             if (line[i] == '"') {
                 // Toggle the inside_string flag when encountering a double quote
                 inside_string = !inside_string;
                 fputc(line[i], out_fp);
+                has_written_char = 1;
             } else if (inside_string) {
                 // If inside a string, directly write the character
                 fputc(line[i], out_fp);
+                has_written_char = 1;
             } else {
                 // If not inside a string, process normally
                 if (line[i] == ' ' || line[i] == '\t') {
@@ -453,15 +430,17 @@ void clean_file(const char *input_file, const char *output_file) {
                         previous_char = ' ';
                     }
                 } else if (line[i] == '\n') {
-                    // If it's a newline, skip writing it if the last character was a newline
-                    if (previous_char != '\n') {
+                    // If it's a newline, only write it if a character has been written
+                    if (has_written_char) {
                         fputc('\n', out_fp);
                         previous_char = '\n';
                     }
+                    has_written_char = 0; // Reset for the next line
                 } else {
                     // Write non-space, non-newline characters normally
                     fputc(line[i], out_fp);
                     previous_char = line[i];
+                    has_written_char = 1;
                 }
             }
             i++;
@@ -549,16 +528,22 @@ char* remove_newline(char *str) {
 /*-------------------------------------------------------------------------------------------*/
 
 char* extract_label(char *line) {
-    char *label_end = strchr(line, ':');
-    if (label_end) {
-        int label_len = label_end - line;
-        char *label = malloc_helper(label_len + 1,__FILE_NAME__,__LINE__);
-        if (label) {
-            strncpy(label, line, label_len);
-            label[label_len] = '\0';
-            return label;
+
+
+
+        char *label_end = strchr(line, ':');
+        if (label_end) {
+            int label_len = label_end - line;
+            char *label = malloc_helper(label_len + 1, __FILE_NAME__, __LINE__);
+            if (label) {
+                strncpy(label, line, label_len);
+                label[label_len] = '\0';
+                return label;
+            }
         }
-    }
+
+    //print_error(ERR_ILLEGAL_LABEL_NAME,0);
+
     return NULL;
 }
 

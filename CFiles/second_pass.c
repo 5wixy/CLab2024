@@ -8,8 +8,7 @@
 #include "../HeaderFiles/validation.h"
 #include "../HeaderFiles/globals.h"
 #include "../HeaderFiles/code_binary.h"
-
-
+#include "../HeaderFiles/Errors.h"
 
 
 int start_second_pass(char *file_name, HashTable *symbol_table, AssemblyData *ad) {
@@ -17,7 +16,7 @@ int start_second_pass(char *file_name, HashTable *symbol_table, AssemblyData *ad
         ExternOperand *extern_operands = NULL;
         int extern_count = 0;
         int extern_capacity = INITIAL_EXTERN_OPERANDS_CAPACITY;
-
+        int line_num = 1;
 
     FILE *fp = fopen(file_name, "r");
         if (!fp) {
@@ -51,13 +50,18 @@ int start_second_pass(char *file_name, HashTable *symbol_table, AssemblyData *ad
 
             /* Check if the first or second word is .entry, .extern, .data, or .string */
             if (first_word && (is_entry(first_word) || is_extern(first_word) || is_data_or_string(first_word))) {
+                line_num++;
                 continue;
             }
 
             if (second_word && (is_entry(second_word) || is_extern(second_word) || is_data_or_string(second_word))) {
+                line_num++;
                 continue;
             }
-
+            if(first_word == NULL && second_word == NULL){
+                line_num++;
+                continue;
+            }
             /* If the line is an instruction, process it */
             AssemblyLine *line = malloc_helper(sizeof(AssemblyLine),__FILE_NAME__,__LINE__);
             if (line == NULL) {
@@ -74,13 +78,14 @@ int start_second_pass(char *file_name, HashTable *symbol_table, AssemblyData *ad
         parse_assembly_line(line_copy,line);
 
         /* Process operands to replace labels with their addresses */
-        process_operands_for_labels(line, symbol_table, ad, &IC, &extern_operands, &extern_count, &extern_capacity);
+        process_operands_for_labels(line, symbol_table, ad, &IC, &extern_operands, &extern_count, &extern_capacity,line_num);
 
         /* Increment IC based on the current instruction */
         IC += calculate_increment(line->src_operand, line->dest_operand);
 
         /* Clean up */
         free_assembly_line(line);
+        line_num++;
     }
 
 
@@ -130,7 +135,7 @@ void fill_ext_file(const char *file_name, ExternOperand *extern_operands, int ex
 
     int i;
     for (i = 0; i < extern_count; i++) {
-        fprintf(file, "%s %d\n", extern_operands[i].label_name, extern_operands[i].address);
+        fprintf(file, "%s %04d\n", extern_operands[i].label_name, extern_operands[i].address);
     }
 
     /* Close the file */
@@ -204,7 +209,7 @@ int count_extern(HashTable *table) {
     return count;
 }
 
-void fill_ob_file(const char *file_name, AssemblyData *ad){
+void fill_ob_file(const char *file_name, AssemblyData *ad) {
     FILE *fp = fopen(file_name, "w");
     int i;
     if (!fp) {
@@ -227,13 +232,13 @@ void fill_ob_file(const char *file_name, AssemblyData *ad){
     /* Process the instructions array */
     for (i = 0; i < ad->instruction_count; ++i) {
         binary_to_octal_15bit(ad->instructions[i], octal);
-        fprintf(fp, "%d %s\n", i + 100, octal);
+        fprintf(fp, "%04d %s\n", i + 100, octal);  // %04d ensures a 4-digit number with leading zeros
     }
 
     /* Process the data array */
     for (i = 0; i < ad->data_count; ++i) {
         binary_to_octal_15bit(ad->data[i], octal);
-        fprintf(fp, "%d %s\n", i + 100 + ad->instruction_count, octal);
+        fprintf(fp, "%04d %s\n", i + 100 + ad->instruction_count, octal);  // %04d ensures a 4-digit number with leading zeros
     }
 
     /* Free the memory after the loop */
@@ -243,7 +248,7 @@ void fill_ob_file(const char *file_name, AssemblyData *ad){
 }
 
 
-void process_operands_for_labels(AssemblyLine *line, HashTable *symbol_table, AssemblyData *ad, int *IC, ExternOperand **extern_operands, int *extern_count, int *extern_capacity) {
+void process_operands_for_labels(AssemblyLine *line, HashTable *symbol_table, AssemblyData *ad, int *IC, ExternOperand **extern_operands, int *extern_count, int *extern_capacity,int line_num) {
     if (!line || !ad || !symbol_table || !extern_operands || !extern_count || !extern_capacity) {
         fprintf(stderr, "Error: Invalid arguments to process_operands_for_labels\n");
         return;
@@ -262,15 +267,15 @@ void process_operands_for_labels(AssemblyLine *line, HashTable *symbol_table, As
 
     /* Update source operand if it uses direct addressing */
     if (line->src_operand && src_index >= 0) {
-        process_and_update_operand(line, line->src_operand, symbol_table, ad, src_index, extern_operands, extern_count, extern_capacity);
+        process_and_update_operand(line, line->src_operand, symbol_table, ad, src_index, extern_operands, extern_count, extern_capacity,line_num);
     }
 
     /* Update destination operand if it uses direct addressing */
     if (line->dest_operand && dest_index >= 0) {
-        process_and_update_operand(line, line->dest_operand, symbol_table, ad, dest_index, extern_operands, extern_count, extern_capacity);
+        process_and_update_operand(line, line->dest_operand, symbol_table, ad, dest_index, extern_operands, extern_count, extern_capacity,line_num);
     }
 }
-void process_and_update_operand(AssemblyLine *line, const char *operand, HashTable *symbol_table, AssemblyData *ad, int index, ExternOperand **extern_operands, int *extern_count, int *extern_capacity) {
+void process_and_update_operand(AssemblyLine *line, const char *operand, HashTable *symbol_table, AssemblyData *ad, int index, ExternOperand **extern_operands, int *extern_count, int *extern_capacity,int line_num) {
     if (!operand || !symbol_table || !ad || index < 0) {
         fprintf(stderr, "Error: Invalid arguments in process_and_update_operand\n");
         return;
@@ -278,43 +283,51 @@ void process_and_update_operand(AssemblyLine *line, const char *operand, HashTab
 
     remove_trailing_spaces(operand);
 
-    /* Check if the operand is a label */
-    HashItem *item = get_label(symbol_table, operand);
-    if (item) {
-        /* Replace the operand with the label's address in binary */
-        char address_binary[WORD_SIZE];
-        int label_address = item->data.label.address;
 
-        if (item->data.label.label_sort == DAT) {
-            to_binary_address(label_address + 100 + ad->instruction_count, address_binary);
-        } else {
-            to_binary_address(label_address, address_binary);
+    if(detect_addressing_method(operand) == DIRECT) {
+        /* Check if the operand is a label */
+        HashItem *item = get_label(symbol_table, operand);
+        if (item) {
+            /* Replace the operand with the label's address in binary */
+            char address_binary[WORD_SIZE];
+            int label_address = item->data.label.address;
+
+            if (item->data.label.label_sort == DAT) {
+                to_binary_address(label_address + 100 + ad->instruction_count, address_binary);
+            } else {
+                to_binary_address(label_address, address_binary);
+            }
+
+            if (index >= 0 && index < ad->instruction_count) {
+                update_first_12_bits(ad->instructions[index], address_binary);
+            }
+
+            /* Ensure enough space for appending "001" or "010" */
+            size_t current_len = strlen(ad->instructions[index]);
+            size_t new_len = current_len + 3 + 1; /* 3 for "001" or "010", 1 for null terminator */
+
+            char *new_instruction = realloc(ad->instructions[index], new_len);
+            if (!new_instruction) {
+                perror("Memory reallocation failed");
+                exit(1);
+            }
+
+            ad->instructions[index] = new_instruction;
+
+            if (item->data.label.type == LABEL_EXTERN) {
+                strcat(ad->instructions[index], "001");
+
+
+                add_extern_operand(extern_operands, extern_count, extern_capacity, operand, index + 100);
+
+            } else {
+                strcat(ad->instructions[index], "010");
+            }
         }
-
-        if (index >= 0 && index < ad->instruction_count) {
-            update_first_12_bits(ad->instructions[index], address_binary);
-        }
-
-        /* Ensure enough space for appending "001" or "010" */
-        size_t current_len = strlen(ad->instructions[index]);
-        size_t new_len = current_len + 3 + 1; /* 3 for "001" or "010", 1 for null terminator */
-
-        char *new_instruction = realloc(ad->instructions[index], new_len);
-        if (!new_instruction) {
-            perror("Memory reallocation failed");
-            exit(1);
-        }
-
-        ad->instructions[index] = new_instruction;
-
-        if (item->data.label.type == LABEL_EXTERN) {
-            strcat(ad->instructions[index], "001");
+        else{
+            print_error(ERR_UNDEFINED_LABEL, line_num);
 
 
-            add_extern_operand(extern_operands, extern_count, extern_capacity, operand, index + 100);
-
-        } else {
-            strcat(ad->instructions[index], "010");
         }
     }
 }

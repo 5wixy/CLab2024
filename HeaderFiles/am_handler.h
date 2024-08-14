@@ -15,18 +15,12 @@ typedef struct command_parts {
     char *source;    /* The source operand of the command */
     char *dest;      /* The destination operand of the command */
 } command_parts;
-typedef struct inst_parts {
-    char *label;       /* The label associated with the instruction */
-    int is_extern;     /* Indicates whether the instruction is marked as external */
-    int is_entry;
 
-} inst_parts;
 
 char* get_first_word(char *str);
 void skip_first_word(char *line_copy);
 int match_opcodes(char *str);
 int find_register_index( char *reg_name);
-int is_valid_command(command_parts *command);
 void process_register_operands(const char *src_operand, const char *dest_operand, char *output);
 void process_register_operand(const char *operand, char *output, int position);
 void process_direct_operand(const char *operand, char *output,HashTable *table);

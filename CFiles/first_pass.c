@@ -10,6 +10,8 @@
 #include "../HeaderFiles/asm_data.h"
 #include "../HeaderFiles/data_strct.h"
 #include "../HeaderFiles/validation.h"
+#include "../HeaderFiles/Errors.h"
+#include "../HeaderFiles/error_checker.h"
 
 
 void process_label_line(AssemblyLine *line, HashTable *table, int *IC, int *DC, AssemblyData *ad) {
@@ -71,7 +73,7 @@ void process_labeled_operation(AssemblyLine *line, HashTable *table, int *IC, As
     int start_first_pass(char *file_name, HashTable *symbol_table, AssemblyData *ad) {
         int IC = 100;
         int DC = 0;
-
+        int line_num = 1;
         FILE *fp = fopen(file_name, "r");
         if (!fp) {
             perror("Error opening file");
@@ -91,12 +93,15 @@ void process_labeled_operation(AssemblyLine *line, HashTable *table, int *IC, As
 
 
             parse_assembly_line(str, line);
+            check_line_error(*line, line_copy, line_num);
             if (is_entry_or_extern(str, symbol_table, &IC)) {
                 free_assembly_line(line);
+                line_num++;
                 continue;
             }
             process_label_line(line, symbol_table, &IC, &DC, ad);
             free_assembly_line(line);
+            line_num++;
         }
 
         fclose(fp);
