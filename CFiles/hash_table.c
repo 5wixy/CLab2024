@@ -20,9 +20,9 @@ void insert_macro(HashTable *ht, const char *key, const char *content) {
         perror("Memory allocation error");
         exit(EXIT_FAILURE);
     }
-    newItem->name = strdup(key);
+    newItem->name = my_strdup(key);
     newItem->type = TYPE_MACRO;
-    newItem->data.content = strdup(content);
+    newItem->data.content = my_strdup(content);
     newItem->next = NULL;
 
     if (ht->table[idx] == NULL) {
@@ -37,6 +37,7 @@ void insert_label(HashTable *ht, const char *key, int address, int type, int lab
 
     /* Check if the label already exists */
     HashItem *current = ht->table[idx];
+    HashItem *newItem;
     while (current != NULL) {
         if (strcmp(current->name, key) == 0 && current->type == TYPE_LABEL) {
             /* Update the existing label's attributes */
@@ -49,21 +50,26 @@ void insert_label(HashTable *ht, const char *key, int address, int type, int lab
     }
 
     /* If the label does not exist, create a new entry */
-    HashItem *newItem = (HashItem *)malloc_helper(sizeof(HashItem), __FILE_NAME__, __LINE__);
+    newItem = (HashItem *)malloc_helper(sizeof(HashItem));
     if (!newItem) {
         perror("Memory allocation error");
         exit(EXIT_FAILURE);
     }
-    newItem->name = strdup(key);
+
+    /* Duplicate the key for the label */
+    newItem->name = my_strdup(key);
     if (!newItem->name) {
         perror("Memory allocation error");
         exit(EXIT_FAILURE);
     }
 
+    /* Set up the new label's data */
     newItem->type = TYPE_LABEL;
     newItem->data.label.address = address;
     newItem->data.label.type = type;
     newItem->data.label.label_sort = label_sort;
+
+    /* Link the new label to the existing chain */
     newItem->next = ht->table[idx];
     ht->table[idx] = newItem;
 }
@@ -94,48 +100,70 @@ HashItem *get_label(HashTable *ht, const char *key) {
 
     return NULL;
 }
+
+/*Free memory from table items */
 void freeHashTable(HashTable *ht) {
     int i;
+    if (ht == NULL || ht->table == NULL) {
+        return;
+    }
     for (i = 0; i < TABLE_SIZE; i++) {
         HashItem *entry = ht->table[i];
         while (entry != NULL) {
             HashItem *prev = entry;
             entry = entry->next;
-            my_free(prev->name,__FILE_NAME__,__LINE__);
-            if (prev->type == TYPE_MACRO) {
-                my_free(prev->data.content,__FILE_NAME__,__LINE__);
-            } else if (prev->type == TYPE_LABEL) {
 
+            if (prev->name != NULL) {
+                my_free(prev->name);
             }
-            my_free(prev,__FILE_NAME__,__LINE__);
+
+
+            if (prev->type == TYPE_MACRO && prev->data.content != NULL) {
+                my_free(prev->data.content);
+            }
+
+
+            my_free(prev);
         }
+        ht->table[i] = NULL;
     }
 }
+/*Free memory from macros in table*/
 void free_macros_from_table(HashTable *ht) {
     int i;
+    if (ht == NULL || ht->table == NULL) {
+        return;
+    }
+   
     for (i = 0; i < TABLE_SIZE; i++) {
         HashItem *item = ht->table[i];
         HashItem *prev = NULL;
         while (item != NULL) {
             if (item->type == TYPE_MACRO) {
                 HashItem *temp = item;
-                // Move to the next item before freeing the current one
                 item = item->next;
 
-                // Free the memory associated with TYPE_MACRO
-                my_free(temp->name, __FILE_NAME__, __LINE__);
-                my_free(temp->data.content, __FILE_NAME__, __LINE__);
-                my_free(temp, __FILE_NAME__, __LINE__);
+                if (temp->name != NULL) {
+                    my_free(temp->name);
+                }
+                if (temp->data.content != NULL) {
+                    my_free(temp->data.content);
+                }
+                my_free(temp);
+
+                if (prev != NULL) {
+                    prev->next = item;
+                } else {
+                    ht->table[i] = item;
+                }
             } else {
-                // Move to the next item
                 prev = item;
                 item = item->next;
             }
         }
-        // Ensure the table entry is reset
-        ht->table[i] = NULL;
     }
 }
+/*Hashing function for the hash table */
 unsigned long hash(const char *macro_name) {
     unsigned long hash = 5381;
 
@@ -145,17 +173,4 @@ unsigned long hash(const char *macro_name) {
     }
     return hash % TABLE_SIZE;
 }
-int get_address(HashTable *ht, const char *key) {
-    unsigned long idx = hash(key);
-    HashItem *entry = ht->table[idx];
 
-
-    while (entry != NULL) {
-        if (strcmp(entry->name, key) == 0 && entry->type == TYPE_LABEL) {
-            return entry->data.label.address;
-        }
-        entry = entry->next;
-    }
-
-    return -1;
-}

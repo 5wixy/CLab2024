@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
 project(CLab C)
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ansi -pedantic -Wall")
 set(CMAKE_C_STANDARD 90)
 
 add_executable(CLab "CFiles/main.c"
@@ -9,8 +9,6 @@ add_executable(CLab "CFiles/main.c"
         "HeaderFiles/preproc.h"
         "CFiles/helper.c"
         "HeaderFiles/helper.h"
-        "CFiles/macro.c"
-        "HeaderFiles/macro.h"
         "CFiles/hash_table.c"
         "HeaderFiles/hash_table.h"
         "CFiles/validation.c"

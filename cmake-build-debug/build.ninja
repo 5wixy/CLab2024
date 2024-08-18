@@ -51,85 +51,79 @@ build cmake_object_order_depends_target_CLab: phony || CMakeFiles/CLab.dir
 
 build CMakeFiles/CLab.dir/CFiles/main.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/main.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\main.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/preproc.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/preproc.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\preproc.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/helper.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/helper.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\helper.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
-  OBJECT_DIR = CMakeFiles\CLab.dir
-  OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
-
-build CMakeFiles/CLab.dir/CFiles/macro.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/macro.c || cmake_object_order_depends_target_CLab
-  DEP_FILE = CMakeFiles\CLab.dir\CFiles\macro.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/hash_table.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/hash_table.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\hash_table.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/validation.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/validation.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\validation.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/first_pass.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/first_pass.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\first_pass.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/am_handler.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/am_handler.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\am_handler.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/code_binary.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/code_binary.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\code_binary.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/asm_data.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/asm_data.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\asm_data.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/second_pass.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/second_pass.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\second_pass.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/data_strct.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/data_strct.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\data_strct.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/Errors.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/Errors.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\Errors.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
 build CMakeFiles/CLab.dir/CFiles/error_checker.c.obj: C_COMPILER__CLab_unscanned_Debug D$:/CLab/CFiles/error_checker.c || cmake_object_order_depends_target_CLab
   DEP_FILE = CMakeFiles\CLab.dir\CFiles\error_checker.c.obj.d
-  FLAGS = -g -std=gnu90 -fdiagnostics-color=always
+  FLAGS = -ansi -pedantic -Wall -g -std=gnu90 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\CLab.dir
   OBJECT_FILE_DIR = CMakeFiles\CLab.dir\CFiles
 
@@ -141,8 +135,8 @@ build CMakeFiles/CLab.dir/CFiles/error_checker.c.obj: C_COMPILER__CLab_unscanned
 #############################################
 # Link the executable CLab.exe
 
-build CLab.exe: C_EXECUTABLE_LINKER__CLab_Debug CMakeFiles/CLab.dir/CFiles/main.c.obj CMakeFiles/CLab.dir/CFiles/preproc.c.obj CMakeFiles/CLab.dir/CFiles/helper.c.obj CMakeFiles/CLab.dir/CFiles/macro.c.obj CMakeFiles/CLab.dir/CFiles/hash_table.c.obj CMakeFiles/CLab.dir/CFiles/validation.c.obj CMakeFiles/CLab.dir/CFiles/first_pass.c.obj CMakeFiles/CLab.dir/CFiles/am_handler.c.obj CMakeFiles/CLab.dir/CFiles/code_binary.c.obj CMakeFiles/CLab.dir/CFiles/asm_data.c.obj CMakeFiles/CLab.dir/CFiles/second_pass.c.obj CMakeFiles/CLab.dir/CFiles/data_strct.c.obj CMakeFiles/CLab.dir/CFiles/Errors.c.obj CMakeFiles/CLab.dir/CFiles/error_checker.c.obj
-  FLAGS = -g
+build CLab.exe: C_EXECUTABLE_LINKER__CLab_Debug CMakeFiles/CLab.dir/CFiles/main.c.obj CMakeFiles/CLab.dir/CFiles/preproc.c.obj CMakeFiles/CLab.dir/CFiles/helper.c.obj CMakeFiles/CLab.dir/CFiles/hash_table.c.obj CMakeFiles/CLab.dir/CFiles/validation.c.obj CMakeFiles/CLab.dir/CFiles/first_pass.c.obj CMakeFiles/CLab.dir/CFiles/am_handler.c.obj CMakeFiles/CLab.dir/CFiles/code_binary.c.obj CMakeFiles/CLab.dir/CFiles/asm_data.c.obj CMakeFiles/CLab.dir/CFiles/second_pass.c.obj CMakeFiles/CLab.dir/CFiles/data_strct.c.obj CMakeFiles/CLab.dir/CFiles/Errors.c.obj CMakeFiles/CLab.dir/CFiles/error_checker.c.obj
+  FLAGS = -ansi -pedantic -Wall -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\CLab.dir
   POST_BUILD = cd .

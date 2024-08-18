@@ -30,7 +30,7 @@ char *copy_text(FILE *fp, fpos_t *pos, int str_len) {
     }
 
 
-    str = malloc_helper((str_len + 1) * sizeof(char),__FILE_NAME__,__LINE__);
+    str = malloc_helper((str_len + 1) * sizeof(char));
     if (str == NULL) {
         return NULL;
     }
@@ -43,23 +43,34 @@ char *copy_text(FILE *fp, fpos_t *pos, int str_len) {
 }
 
 
-void *malloc_helper(int object_size, char *file, int line) {
+void *malloc_helper(int object_size) {
     void *obj_ptr = malloc(object_size);
     if (obj_ptr == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(1); /* Exit the program on memory allocation failure */
     }
-   // printf("Allocated %d bytes at %p (%s:%d)\n", object_size, obj_ptr, file, line);
 
     return obj_ptr;
 }
-void my_free(void* ptr, const char* file, int line) {
-    //printf("Freeing memory at %p (%s:%d)\n", ptr, file, line);
+
+/*Free pointer from memory, custom function for management*/
+void my_free(void* ptr) {
+    
     free(ptr);
     ptr = NULL;
 }
+/*Duplicate a given string*/
+char *my_strdup(const char *src) {
+    int len;
+    char *dest;
+    if (src == NULL) return NULL;
+    len = strlen(src) + 1;
+    dest = malloc_helper(len);
+    strcpy(dest, src);
+    return dest;
+}
 
-int detect_addressing_method(char *operand) {
+int detect_addressing_method(const char *operand) {
     if(operand == NULL) {
         return -1;
     }
@@ -77,15 +88,43 @@ int detect_addressing_method(char *operand) {
     }
 }
 
+int match_opcodes(char *str){
+    int i;
+    if (str == NULL) {
+        return -1;
+    }
 
-int get_register_value(const char *register_name) {
+
+    for (i = 0; i < OP_ARR_SIZE; i++) {
+        if (strcmp(str, op_arr[i].opcode) == 0) {
+            return i; /* Return the index of the matching opcode */
+        }
+    }
+    return -1; /* Return -1 if the string does not match any known opcodes */
+}
+
+void remove_commas(char *str) {
+    char *src = str, *dst = str;
+
+    while (*src) {
+        if (*src != ',') {
+            *dst++ = *src;
+        }
+        src++;
+    }
+    *dst = '\0';  /* Null-terminate the modified string */
+}
+
+/*Get a register numeric value*/
+int get_register_value( char *register_name) {
+    int i;
+    int num_registers;
     remove_commas(register_name);
-    trim_spaces(register_name);
+    trim_whitespace(register_name);
     if(register_name[0] == '*'){
         register_name++;
     }
-    int num_registers = sizeof(register_table) / sizeof(register_table[0]);
-    int i;
+    num_registers = 8;
     for (i = 0; i < num_registers; i++) {
         if (strcmp(register_name, register_table[i].name) == 0) {
             return register_table[i].value;
@@ -93,25 +132,6 @@ int get_register_value(const char *register_name) {
     }
     /* Return -1 if the register is not found */
     return -1;
-}
-void trim_spaces(char *str) {
-    char *end;
-
-    /* Trim leading spaces */
-    while (isspace((unsigned char)*str)) str++;
-
-    /* If all spaces or empty string */
-    if (*str == 0) {
-        str[0] = '\0';
-        return;
-    }
-
-    /*/ Trim trailing spaces */
-    end = str + strlen(str) - 1;
-    while (end > str && isspace((unsigned char)*end)) end--;
-
-    /* Write new null terminator */
-    *(end + 1) = 0;
 }
 void to_binary_string(int num, int bits, char *output) {
     int i;
@@ -122,7 +142,7 @@ void to_binary_string(int num, int bits, char *output) {
 
 }
 void remove_trailing_newline(char *str) {
-    size_t len = strlen(str);
+    int len = strlen(str);
 
     /* Check if the last character is a newline and remove it */
     if (len > 0 && str[len - 1] == '\n') {
@@ -165,16 +185,16 @@ void addressing_method_to_binary(int method, char *output) {
             strcpy(output, "1000");
             break;
         default:
-            /* Handle invalid method index if necessary */
             strcpy(output, "0000");  /* Default to an invalid or error code */
             break;
     }
 }
 
 void remove_trailing_spaces(char *str) {
+    int length;
     if (str == NULL) return;  /* Check for NULL pointer */
 
-    int length = strlen(str);
+    length = strlen(str);
 
     /* Iterate from the end of the string and trim spaces */
     while (length > 0 && str[length - 1] == ' ') {
@@ -185,173 +205,23 @@ void remove_trailing_spaces(char *str) {
 char *trim_whitespace(char *str) {
     char *end;
 
-    // Trim leading spaces
     while (isspace((unsigned char)*str)) str++;
 
-    // If the string is empty after trimming leading spaces, return it
     if (*str == 0)
         return str;
 
-    // Trim trailing spaces
     end = str + strlen(str) - 1;
     while (end > str && isspace((unsigned char)*end)) end--;
 
-    // Null-terminate the trimmed string
     *(end + 1) = '\0';
 
     return str;
 }
-void trim_whitespaces(char *str) {
-    // Remove leading whitespace
-    char *start = str;
-    while (isspace((unsigned char)*start)) {
-        start++;
-    }
 
-    // Remove trailing whitespace
-    char *end = start + strlen(start) - 1;
-    while (end > start && isspace((unsigned char)*end)) {
-        end--;
-    }
 
-    // Null terminate the string
-    *(end + 1) = '\0';
-
-    // Move the trimmed string to the beginning
-    memmove(str, start, strlen(start) + 1);
-}
-void trim_file_in_place(const char *file_name) {
-    FILE *original_file = fopen(file_name, "r");
-    if (original_file == NULL) {
-        perror("Error opening file for reading");
-        exit(EXIT_FAILURE);
-    }
-
-    FILE *temp_file = tmpfile(); // Creates a temporary file
-    if (temp_file == NULL) {
-        perror("Error creating temporary file");
-        fclose(original_file);
-        exit(EXIT_FAILURE);
-    }
-
-    char line[MAX_LINE_LEN];
-
-    // Read each line, trim it, and write to the temporary file
-    while (fgets(line, sizeof(line), original_file)) {
-        trim_whitespaces(line);
-
-        if (strlen(line) > 0) {
-            fputs(line, temp_file);
-            fputc('\n', temp_file);  // Add a newline after the trimmed line
-        }
-    }
-
-    // Close the original file and reopen it for writing
-    fclose(original_file);
-    original_file = fopen(file_name, "w");
-    if (original_file == NULL) {
-        perror("Error reopening original file for writing");
-        fclose(temp_file);
-        exit(EXIT_FAILURE);
-    }
-
-    // Rewind the temporary file to the beginning
-    rewind(temp_file);
-
-    // Copy the trimmed content from the temporary file back to the original file
-    while (fgets(line, sizeof(line), temp_file)) {
-        fputs(line, original_file);
-    }
-
-    // Close both files
-    fclose(temp_file);
-    fclose(original_file);
-}
-void trim_file(const char *filename) {
-    char temp_filename[] = "tempfile.txt";
-    FILE *original, *temp;
-    char line[MAX_LINE_LEN];
-
-    original = fopen(filename, "r");
-    if (!original) {
-        perror("Error opening original file");
-        exit(EXIT_FAILURE);
-    }
-
-    temp = fopen(temp_filename, "w");
-    if (!temp) {
-        perror("Error opening temporary file");
-        fclose(original);
-        exit(EXIT_FAILURE);
-    }
-
-    while (fgets(line, sizeof(line), original)) {
-        trim_line(line);
-        if (strlen(line) > 0) { // Only write non-empty lines
-            fprintf(temp, "%s\n", line);
-        }
-    }
-
-    fclose(original);
-    fclose(temp);
-
-    // Replace the original file with the trimmed version
-    if (remove(filename) != 0) {
-        perror("Error deleting original file");
-        exit(EXIT_FAILURE);
-    }
-    if (rename(temp_filename, filename) != 0) {
-        perror("Error renaming temporary file");
-        exit(EXIT_FAILURE);
-    }
-}
-void trim_file_to_temp(const char *source_file, char *temp_file) {
-    FILE *original, *temp;
-    char line[MAX_LINE_LEN];
-
-    original = fopen(source_file, "r");
-    if (original == NULL) {
-        perror("Error opening source file");
-        exit(EXIT_FAILURE);
-    }
-
-    temp = fopen(temp_file, "w");
-    if (temp == NULL) {
-        perror("Error opening temp file");
-        fclose(original);
-        exit(EXIT_FAILURE);
-    }
-
-    while (fgets(line, sizeof(line), original)) {
-        char *trimmed_line = trim_whitespace(line);
-        if (strlen(trimmed_line) > 0) {
-            fputs(trimmed_line, temp);
-            fputc('\n', temp);
-        }
-    }
-
-    fclose(original);
-    fclose(temp);
-}
-void trim_line(char *line) {
-    char *end;
-
-    // Trim leading space
-    while (*line == ' ' || *line == '\t') {
-        line++;
-    }
-
-    // Trim trailing space
-    end = line + strlen(line) - 1;
-    while (end > line && (*end == ' ' || *end == '\t' || *end == '\n')) {
-        *end = '\0';
-        end--;
-    }
-}
 void copy_file_content(const char *source_file, const char *destination_file, int remove_macros_flag) {
     FILE *original, *copied;
     char line[1024];
-    int remove_macros_detected = 0;
 
     /* Open source file in read mode */
     original = fopen(source_file, "r");
@@ -383,77 +253,11 @@ void copy_file_content(const char *source_file, const char *destination_file, in
     fclose(original);
     fclose(copied);
 }
-void clean_file(const char *input_file, const char *output_file) {
-    FILE *in_fp, *out_fp;
-    char line[MAX_LINE_LEN];
-    int previous_char = '\n'; // Initialize as newline to handle leading spaces
-    int inside_string = 0; // Flag to track if we are inside a string
 
-    in_fp = fopen(input_file, "r");
-    if (in_fp == NULL) {
-        perror("Error opening input file");
-        exit(EXIT_FAILURE);
-    }
-
-    out_fp = fopen(output_file, "w");
-    if (out_fp == NULL) {
-        perror("Error opening output file");
-        fclose(in_fp);
-        exit(EXIT_FAILURE);
-    }
-
-    while (fgets(line, sizeof(line), in_fp)) {
-        // Skip lines that start with a semicolon
-        if (line[0] == ';') {
-            continue;
-        }
-
-        int i = 0;
-        int has_written_char = 0; // Flag to check if we wrote a non-space character
-
-        while (line[i] != '\0') {
-            if (line[i] == '"') {
-                // Toggle the inside_string flag when encountering a double quote
-                inside_string = !inside_string;
-                fputc(line[i], out_fp);
-                has_written_char = 1;
-            } else if (inside_string) {
-                // If inside a string, directly write the character
-                fputc(line[i], out_fp);
-                has_written_char = 1;
-            } else {
-                // If not inside a string, process normally
-                if (line[i] == ' ' || line[i] == '\t') {
-                    // Skip spaces or tabs if the last character written was also a space or a newline
-                    if (previous_char != ' ' && previous_char != '\n') {
-                        fputc(' ', out_fp);
-                        previous_char = ' ';
-                    }
-                } else if (line[i] == '\n') {
-                    // If it's a newline, only write it if a character has been written
-                    if (has_written_char) {
-                        fputc('\n', out_fp);
-                        previous_char = '\n';
-                    }
-                    has_written_char = 0; // Reset for the next line
-                } else {
-                    // Write non-space, non-newline characters normally
-                    fputc(line[i], out_fp);
-                    previous_char = line[i];
-                    has_written_char = 1;
-                }
-            }
-            i++;
-        }
-    }
-
-    fclose(in_fp);
-    fclose(out_fp);
-}
 
 char *create_new_file_name(char *file_name, char *ending) {
     char *c, *new_file_name;
-    new_file_name = malloc_helper(MAX_LINE_LEN * sizeof(char),__FILE_NAME__,__LINE__);
+    new_file_name = malloc_helper(MAX_LINE_LEN * sizeof(char));
     strcpy(new_file_name, file_name);
     /* deleting the file name if a '.' exists and forth */
     if ((c = strchr(new_file_name, '.')) != NULL) {
@@ -464,66 +268,6 @@ char *create_new_file_name(char *file_name, char *ending) {
     return new_file_name;
 }
 
-void close_resources(int num_args, ...) {
-    int i;
-    FILE *fp;
-    char *str, *type;
-    va_list args;
-
-    va_start(args, num_args);
-
-    for (i = 0; i < num_args; i++) {
-        type = va_arg(args, char*);
-
-        if (strcmp(type, "FILE") == 0) {
-            fp = va_arg(args, FILE*);
-            fclose(fp);
-        } else if (strcmp(type, "STRING") == 0) {
-            str = va_arg(args, char*);
-            remove(str);
-            my_free(str,__FILE_NAME__,__LINE__);
-        }
-    }
-
-    va_end(args);
-}
-void print_ascii_values(char *str) {
-    while (*str) {
-        printf("Character: %c, ASCII value: %d\n", *str, (int)*str);
-        str++;
-    }
-}
-char* remove_newline(char *str) {
-    char *last_newline = strrchr(str, '\n');
-
-    /* If no newline character is found, return a copy of the original string */
-    if (last_newline == NULL) {
-        char *copy = strdup(str);
-        if (copy == NULL) {
-            perror("Failed to allocate memory");
-            exit(EXIT_FAILURE);
-        }
-        return copy;
-    }
-
-    /* Calculate the length of the new string */
-    size_t len = strlen(str) - 1;
-
-    /* Allocate memory for the new string */
-    char *new_str = (char*)malloc((len + 1) * sizeof(char));
-    if (new_str == NULL) {
-        perror("Failed to allocate memory");
-        exit(EXIT_FAILURE);
-    }
-
-    /* Copy the original string up to the last newline character */
-    strncpy(new_str, str, last_newline - str);
-
-    /* Copy the rest of the original string after the last newline character */
-    strcpy(new_str + (last_newline - str), last_newline + 1);
-
-    return new_str;
-}
 
 /*-------------------------------------------------------------------------------------------*/
 
@@ -534,7 +278,7 @@ char* extract_label(char *line) {
         char *label_end = strchr(line, ':');
         if (label_end) {
             int label_len = label_end - line;
-            char *label = malloc_helper(label_len + 1, __FILE_NAME__, __LINE__);
+            char *label = malloc_helper(label_len + 1);
             if (label) {
                 strncpy(label, line, label_len);
                 label[label_len] = '\0';
@@ -542,7 +286,7 @@ char* extract_label(char *line) {
             }
         }
 
-    //print_error(ERR_ILLEGAL_LABEL_NAME,0);
+
 
     return NULL;
 }
@@ -550,6 +294,9 @@ char* extract_label(char *line) {
 int extract_opcode(char *line) {
     /* Find the end of the label, if present */
     char *label_end = strchr(line, ':');
+    int opcode;
+    char saved_char;
+    char *opcode_end;
     /* Start after the label or at the beginning of the line */
     char *start = label_end ? label_end + 1 : line;
     /* Skip leading spaces or tabs */
@@ -557,15 +304,15 @@ int extract_opcode(char *line) {
         start++;
     }
     /* Find the end of the opcode */
-    char *opcode_end = start;
+    opcode_end = start;
     while (*opcode_end != ' ' && *opcode_end != '\t' && *opcode_end != '\0') {
         opcode_end++;
     }
     /* Temporarily null-terminate the opcode */
-    char saved_char = *opcode_end;
+    saved_char = *opcode_end;
     *opcode_end = '\0';
     /* Match the opcode */
-    int opcode = match_opcodes(start);
+    opcode = match_opcodes(start);
     /* Restore the character at the end of the opcode */
     *opcode_end = saved_char;
     if (opcode > -1) {
@@ -574,13 +321,15 @@ int extract_opcode(char *line) {
     return -1;  /* Return -1 if no opcode is matched */
 }
 char* extract_src_operand(const char *line) {
+    char *result,*src_start,*src_end,*label_end;
+    int length;
     /* Skip leading whitespace */
     while (*line == ' ') {
         line++;
     }
 
     /* Skip label if present */
-    char *label_end = strchr(line, ':');
+    label_end = strchr(line, ':');
     if (label_end) {
         line = label_end + 1;
         while (*line == ' ') {
@@ -589,14 +338,14 @@ char* extract_src_operand(const char *line) {
     }
 
     /* Find the start of the src_operand */
-    char *src_start = strchr(line, ' ');
+    src_start = strchr(line, ' ');
     if (!src_start) {
         return NULL;
     }
     src_start++; /* Skip the space */
 
     /* Find the end of the src_operand */
-    char *src_end = strchr(src_start, ',');
+    src_end = strchr(src_start, ',');
     if (!src_end) {
         src_end = strchr(src_start, '\0'); /* Handle case where there's no comma */
     }
@@ -609,32 +358,30 @@ char* extract_src_operand(const char *line) {
         return NULL;
     }
     /* Null-terminate the src_operand */
-    size_t length = src_end - src_start;
-    char *result = malloc_helper(length + 1,__FILE_NAME__,__LINE__);
-    if (!result) {
-        perror("Memory allocation error");
-        exit(EXIT_FAILURE);
-    }
+    length = src_end - src_start;
+    result = malloc_helper(length + 1);
     strncpy(result, src_start, length);
     result[length] = '\0';
 
     return result;
 }
 char* extract_dest_operand(const char *line) {
-    char *line_copy = malloc_helper(strlen(line) + 1, __FILE_NAME__, __LINE__);
+    char *remaining,*label_end,*src_operand,*result,*opcode;
+    char *original_line_copy;
+    char *line_copy = malloc_helper(strlen(line) + 1);
     if (!line_copy) {
         return NULL;
     }
     strcpy(line_copy, line);
 
     /* Save the original pointer for later freeing */
-    char *original_line_copy = line_copy;
+    original_line_copy = line_copy;
 
     while (*line_copy == ' ') {
         line_copy++;
     }
 
-    char *label_end = strchr(line_copy, ':');
+     label_end = strchr(line_copy, ':');
     if (label_end) {
         line_copy = label_end + 1;
         while (*line_copy == ' ') {
@@ -642,40 +389,40 @@ char* extract_dest_operand(const char *line) {
         }
     }
 
-    char *opcode = strtok(line_copy, " ");
+    opcode = strtok(line_copy, " ");
     if (!opcode) {
-        my_free(original_line_copy,__FILE_NAME__,__LINE__);
+        my_free(original_line_copy);
         return NULL; /* No opcode found */
     }
 
-    char *src_operand = strtok(NULL, ",");
+    src_operand = strtok(NULL, ",");
     if (!src_operand) {
-        my_free(original_line_copy,__FILE_NAME__,__LINE__);
+        my_free(original_line_copy);
         return NULL; /* No source operand found */
     }
 
-    char *remaining = strtok(NULL, "");
+    remaining = strtok(NULL, "");
     if (remaining) {
         /* Remove leading whitespace */
         while (*remaining == ' ') {
             remaining++;
         }
 
-        char *result = malloc_helper(strlen(remaining) + 1, __FILE_NAME__, __LINE__);
+        result = malloc_helper(strlen(remaining) + 1);
         if (result) {
             strcpy(result, remaining);
         }
 
-        my_free(original_line_copy,__FILE_NAME__,__LINE__); /* Free the original pointer */
+        my_free(original_line_copy); /* Free the original pointer */
         return result;
     }
 
-    my_free(original_line_copy,__FILE_NAME__,__LINE__); /* Free the original pointer */
+    my_free(original_line_copy); /* Free the original pointer */
     return NULL;
 }
 
 LineType determine_line_type(AssemblyLine *line, const char *raw_line) {
-    if (line->opcode == NULL || line->opcode == (char*)-1) {
+    if (line->opcode == INVALID_OPCODE) {
         if (strstr(raw_line, ".data")) {
             return DATA;
         } else if (strstr(raw_line, ".string")) {
@@ -688,116 +435,177 @@ LineType determine_line_type(AssemblyLine *line, const char *raw_line) {
 
 
 char** extract_string_data(AssemblyLine *line, const char *str) {
-
     int i, j;
-    const char *start = strchr(str, '"');
-    if (!start) return NULL;
+    const char *start, *end;
+    int length;
+    int data_index = 0;
+    int initial_capacity;
+    char **data_array;
+    char **temp_array;
 
+    /* Find the first quotation mark */
+    start = strchr(str, '"');
+    if (!start) {
+        return NULL; /* No opening quote found */
+    }
     start++; /* Move past the opening quote */
 
+    /* Find the last quotation mark */
+    end = strrchr(start, '"');
+    if (!end || *(end + 1) != '\0') {
+        return NULL; /* No closing quote found or extra characters after the closing quote */
+    }
 
-    const char *end = strchr(start, '"');
-    if (!end) return NULL;
+    /* Calculate the length of the string between the quotes */
+    length = end - start;
+    if (length == 0) {
+        return NULL; /* Empty string */
+    }
 
-    /* Calculate the length of the string and allocate memory */
-    size_t length = end - start;
-    line->data_count = length;
-    if (length == 0) return NULL;
-
-    /* Allocate memory for the data_array */
-    char **data_array = malloc_helper(length * sizeof(char *),__FILE_NAME__,__LINE__);
+    /* Allocate initial memory for the data_array */
+    initial_capacity = length;
+    data_array = malloc_helper(initial_capacity * sizeof(char *));
     if (!data_array) return NULL;
 
     /* Copy each character into the data_array */
     for (i = 0; i < length; ++i) {
-        data_array[i] = malloc_helper(2,__FILE_NAME__,__LINE__);
-        if (data_array[i]) {
-            data_array[i][0] = start[i];
-            data_array[i][1] = '\0';
-        } else {
-
-            for (j = 0; j < i; ++j) {
-                my_free(data_array[j],__FILE_NAME__,__LINE__);
+        /* Check if we need more space in the data_array */
+        if (data_index >= initial_capacity) {
+            initial_capacity *= 2;
+            temp_array = realloc(data_array, initial_capacity * sizeof(char *));
+            if (!temp_array) {
+                /* Free previously allocated memory on failure */
+                for (j = 0; j < data_index; ++j) {
+                    my_free(data_array[j]);
+                }
+                my_free(data_array);
+                return NULL;
             }
-            my_free(data_array,__FILE_NAME__,__LINE__);
+            data_array = temp_array;
+        }
+
+        data_array[data_index] = malloc_helper(2);
+        if (data_array[data_index]) {
+            data_array[data_index][0] = start[i];
+            data_array[data_index][1] = '\0';
+            data_index++;
+        } else {
+            /* Free previously allocated memory on failure */
+            for (j = 0; j < data_index; ++j) {
+                my_free(data_array[j]);
+            }
+            my_free(data_array);
             return NULL;
         }
     }
+
+    line->data_count = data_index;
+
+    /* Null-terminate the array */
+    data_array = realloc(data_array, data_index * sizeof(char *));
+    if (!data_array) {
+        /* Free allocated memory on failure */
+        return NULL;
+    }
+
     return data_array;
 }
+void skip_leading_space(char **str) {
+    while (**str == ' ' || **str == '\t') {
+        (*str)++;
+    }
+}
 
+char** extract_data_array(char *str, int *count) {
 
-char** extract_data_array(AssemblyLine *line, const char *str, int *count) {
     int i;
+    int index;
+    const char *start;
+    char **data_array;
+    char **new_data_array;
+    char *token;
+    char *buffer;
+    int capacity = 10;
+
+    /* Remove trailing newline characters from the string */
     remove_trailing_newline(str);
 
-    const char *start = strchr(str, ':');
+    /* Find the start of the data segment */
+    start = strchr(str, ':');
     if (start) {
         start++;
     } else {
         start = str;
     }
 
+    /* Skip leading whitespace */
     while (*start == ' ' || *start == '\t') {
         start++;
     }
 
+    /* Skip over the .data directive if present */
     if (strncmp(start, ".data", 5) == 0) {
         start += 5;
     }
 
+    /* Skip any additional whitespace */
     while (*start == ' ' || *start == '\t') {
         start++;
     }
 
+    /* Return NULL if the line is empty after processing */
     if (*start == '\0') {
         *count = 0;
         return NULL;
     }
 
-    int capacity = 10;
-    char **data_array = malloc_helper(capacity * sizeof(char*), __FILE_NAME__, __LINE__);
+    /* Initialize the data array with a certain capacity */
+    data_array = malloc_helper(capacity * sizeof(char*));
     if (!data_array) return NULL;
 
-    int index = 0;
-    char *buffer = strdup(start);
+    index = 0;
+    buffer = my_strdup(start);
     if (!buffer) {
-        my_free(data_array, __FILE_NAME__, __LINE__);
+        my_free(data_array);
         return NULL;
     }
 
-    char *token = strtok(buffer, ", ");
+    /* Tokenize the string based on commas and spaces */
+    token = strtok(buffer, ", ");
     while (token != NULL) {
+        /* Resize the array if needed */
         if (index >= capacity) {
             capacity *= 2;
-            char **new_data_array = realloc(data_array, capacity * sizeof(char*));
+            new_data_array = realloc(data_array, capacity * sizeof(char*));
             if (!new_data_array) {
-                my_free(buffer, __FILE_NAME__, __LINE__);
+                my_free(buffer);
                 for (i = 0; i < index; ++i) {
-                    my_free(data_array[i], __FILE_NAME__, __LINE__);
+                    my_free(data_array[i]);
                 }
-                my_free(data_array, __FILE_NAME__, __LINE__);
+                my_free(data_array);
                 return NULL;
             }
             data_array = new_data_array;
         }
 
-        data_array[index] = strdup(token);
+        /* Duplicate the token and add it to the array */
+        data_array[index] = my_strdup(token);
         if (data_array[index]) {
             strcpy(data_array[index], token);
         } else {
-            my_free(buffer, __FILE_NAME__, __LINE__);
+            my_free(buffer);
             for (i = 0; i < index; ++i) {
-                my_free(data_array[i], __FILE_NAME__, __LINE__);
+                my_free(data_array[i]);
             }
-            my_free(data_array, __FILE_NAME__, __LINE__);
+            my_free(data_array);
             return NULL;
         }
         index++;
         token = strtok(NULL, ", ");
     }
 
-    my_free(buffer, __FILE_NAME__, __LINE__);
+    /* Clean up and return the populated data array */
+    my_free(buffer);
     *count = index;
     return data_array;
 }

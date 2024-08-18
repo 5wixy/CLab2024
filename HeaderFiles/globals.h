@@ -1,7 +1,3 @@
-//
-// Created by gyank on 30/06/2024.
-//
-
 #ifndef CLAB_GLOBALS_H
 #define CLAB_GLOBALS_H
 #define MAX_LINE_LEN 81
@@ -9,6 +5,7 @@
 #define OP_ARR_SIZE 16
 #define REG_ARR_SIZE 8
 #define TYPE_ARR_SIZE 4
+#define INVALID_OPCODE -1
 #define MAX_MACRO_NAME_LEN 31
 #define MAX_LABEL_NAME_LEN 31
 #define MAX_SIZE_IMMEDIATE_OPERAND_POS 2047
@@ -51,15 +48,13 @@ typedef enum {
 #define R5_VALUE 5
 #define R6_VALUE 6
 #define R7_VALUE 7
-// Add other register values as necessary...
 
-// Struct to map register names to values
 typedef struct {
     const char *name;
     int value;
 } Register;
 
-// Lookup table for register values
+
 #define INITIAL_ALLOCATION_CAPACITY 10
 
 typedef struct {
@@ -70,4 +65,4 @@ typedef struct {
 
 
 
-#endif //CLAB_GLOBALS_H
+#endif
