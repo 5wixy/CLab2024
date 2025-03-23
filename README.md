@@ -13,7 +13,7 @@
  ### Prerequisites 
  Ensure you have the following installed on your system: - A C compiler (GCC, Clang, or MSVC) - Make (optional, for build automation) 
  ### Build Instructions 
- Clone the repository and build the assembler: ```sh git clone https://github.com/5wixy/CLab2024.git 
+ Clone the repository and build the assembler: ```sh git clone https://github.com/5wixy/Assembler20465.git 
  cd assembler-project 
  make```  or use your preferred build method
  ## Usage 
