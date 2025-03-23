@@ -1,4 +1,6 @@
 # Assembler Project 20465
+## "למרפרנסים"
+אם הפרויקט עזר תנו כוכב פליז
  ## Overview 
  This project is a custom assembler written in C that translates assembly-like instructions into machine code. The assembler follows a **15-bit operation format**, designed to process a specific instruction set efficiently. The goal of this project is to deepen understanding of low-level programming, instruction encoding, and the inner workings of CPU architectures. 
  ## Features 
